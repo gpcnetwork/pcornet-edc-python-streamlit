@@ -1,0 +1,18 @@
+definition_version: 2
+
+entities:
+  pcornet_dq:
+    type: streamlit
+    identifier: PCORNET_DQ_DASHBOARD
+    title: "PCORnet CDM v7 Data Quality"
+    comment: "Data quality checks for PCORnet CDM v7.0 — warehouse runtime"
+    query_warehouse: CDM_ELT_WH
+    main_file: streamlit_app.py
+    artifacts:
+      - streamlit_app.py
+      - dq-analysis/
+      - services/
+      - sql/
+      - views/
+      - utils/
+      - environment.yml
