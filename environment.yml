@@ -1,0 +1,11 @@
+name: PCORNET_DQ_DASHBOARD
+channels:
+  - snowflake
+dependencies:
+  - pandas
+  - plotly
+  - requests
+  - snowflake-snowpark-python
+  - streamlit
+  - keyring
+  - python-dotenv

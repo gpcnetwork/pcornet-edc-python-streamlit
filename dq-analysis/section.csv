@@ -1,0 +1,54 @@
+Section|Table|Table Description|Data Check(s)|SQL_File_Ref
+Section I: Descriptive Information|Table IA|Demographic Summary|n/a|sql/section_i/table_ia_demographic_summary.sql
+Section I: Descriptive Information|Table IB|Potential Pools of Patients|2.09, 3.04, 3.05|sql/section_i/table_ib_potential_pools.sql
+Section I: Descriptive Information|Table IC|Height, Weight, and Body Mass Index (BMI)|n/a|sql/section_i/table_ic_height_weight_bmi.sql
+Section I: Descriptive Information|Table ID|Records, Refresh Dates, Patients, Encounters, and Date Ranges by Table|1.18|sql/section_i/table_id_records_refresh_dates.sql
+Section I: Descriptive Information|Table IE|Records Per Table by Encounter Type|n/a|sql/section_i/table_ie_records_by_encounter_type.sql
+Section I: Descriptive Information|Table IF|Date Obfuscation or Imputation|n/a|sql/section_i/table_if_date_obfuscation.sql
+Section I: Descriptive Information|Chart IA|Trend in Vital Measures by Measurement Date, Past 5 Years|n/a|sql/section_i/chart_ia_vital_trend.sql
+Section I: Descriptive Information|Chart IB|Trend in Encounters by Admit Date and Encounter Type, Past 5 Years|n/a|sql/section_i/chart_ib_encounter_trend.sql
+Section I: Descriptive Information|Chart IC|Trend in Institutional Encounters by Discharge Date and Encounter Type, Past 5 Years|n/a|sql/section_i/chart_ic_institutional_encounter_trend.sql
+Section I: Descriptive Information|Chart ID|Trend in Laboratory Results by Result Date, Past 5 Years|n/a|sql/section_i/chart_id_lab_trend.sql
+Section I: Descriptive Information|Chart IE|Trend in Prescribed Medications by Rx Order Date, Past 5 Years|n/a|sql/section_i/chart_ie_prescribed_meds_trend.sql
+Section I: Descriptive Information|Chart IF|Trend in Dispensed Medications by Dispense Date, Past 5 Years|n/a|sql/section_i/chart_if_dispensed_meds_trend.sql
+Section I: Descriptive Information|Chart IG|Trend in Administered Medications by Start Date, Past 5 Years|n/a|sql/section_i/chart_ig_administered_meds_trend.sql
+Section I: Descriptive Information|Chart IH|Trend in Condition Records by Report Date, Past 5 Years|n/a|sql/section_i/chart_ih_condition_trend.sql
+Section I: Descriptive Information|Chart II|Trend in Death Records by Death Date and Source, Past 5 Years|n/a|sql/section_i/chart_ii_death_trend.sql
+Section I: Descriptive Information|Chart IJ|Trend in Immunization Records by Vx Record Date, Past 5 Years|n/a|sql/section_i/chart_ij_immunization_trend.sql
+Section I: Descriptive Information|Chart IK|Trend in Clinical Observation Records by Start Date, Past 5 Years|n/a|sql/section_i/chart_ik_clinical_obs_trend.sql
+Section I: Descriptive Information|Chart IL|Trend in General Observation Records by Start Date, Past 5 Years|n/a|sql/section_i/chart_il_general_obs_trend.sql
+Section II: Data Model Conformance|Table IIA|Primary Key Errors|1.05|sql/section_ii/table_iia_primary_key_errors.sql
+Section II: Data Model Conformance|Table IIB|Values Outside of Common Data Model (CDM) Specifications|1.06|sql/section_ii/table_iib_values_outside_cdm.sql
+Section II: Data Model Conformance|Table IIC|Non-Permissible Missing Values|1.07|sql/section_ii/table_iic_non_permissible_missing.sql
+Section II: Data Model Conformance|Table IID|Diagnostic Errors|1.01, 1.02, 1.03, 1.04, 1.15, 1.17, 1.21|sql/section_ii/table_iid_diagnostic_errors.sql
+Section II: Data Model Conformance|Table IIE|Orphan Records, Replication Errors, Encounter Duplication and Hash Token Duplication|1.08, 1.09, 1.10, 1.11, 1.12, 1.14, 1.19|sql/section_ii/table_iie_orphan_records.sql
+Section II: Data Model Conformance|Table IIF|Potential Code Errors and Misplaced Codes|1.13, 1.16|sql/section_ii/table_iif_code_errors.sql
+Section II: Data Model Conformance|Table IIG|LOINC Panel Codes|1.20|sql/section_ii/table_iig_loinc_panels.sql
+Section III: Data Plausibility|Table IIIA|Future Dates|2.01|sql/section_iii/table_iiia_future_dates.sql
+Section III: Data Plausibility|Table IIIB|Records with Extreme Values|2.02|sql/section_iii/table_iiib_extreme_values.sql
+Section III: Data Plausibility|Table IIIC|Illogical Dates|2.03|sql/section_iii/table_iiic_illogical_dates.sql
+Section III: Data Plausibility|Table IIID|Encounters Per Visit and Per Patient|2.04|sql/section_iii/table_iiid_encounters_per_visit.sql
+Section III: Data Plausibility|Table IIIG|Monthly Record Volume Outliers, Selected Domains|2.08|sql/section_iii/table_iiig_monthly_volume_outliers.sql
+Section III: Data Plausibility|Chart IIIA|Monthly Record Volume Outliers, Encounters|2.08|sql/section_iii/chart_iiia_encounters_monthly.sql
+Section III: Data Plausibility|Chart IIIB|Monthly Record Volume Outliers, Diagnoses|2.08|sql/section_iii/chart_iiib_diagnoses_monthly.sql
+Section III: Data Plausibility|Chart IIIC|Monthly Record Volume Outliers, Procedures|2.08|sql/section_iii/chart_iiic_procedures_monthly.sql
+Section III: Data Plausibility|Chart IIID|Monthly Record Volume Outliers, Vitals|2.08|sql/section_iii/chart_iiid_vitals_monthly.sql
+Section III: Data Plausibility|Chart IIIE|Monthly Record Volume Outliers, Prescribing|2.08|sql/section_iii/chart_iiie_prescribing_monthly.sql
+Section III: Data Plausibility|Chart IIIF|Monthly Record Volume Outliers, Labs|2.08|sql/section_iii/chart_iiif_labs_monthly.sql
+Section III: Data Plausibility|Chart IIIG|Monthly Record Volume Outliers, Med Admin|2.08|sql/section_iii/chart_iiig_medadmin_monthly.sql
+Section IV: Data Completeness and Plausibility|Table IVA|Diagnosis Records Per Encounter, Overall and by Encounter Type|3.01|sql/section_iv/table_iva_diagnosis_per_encounter.sql
+Section IV: Data Completeness and Plausibility|Chart IVA|Diagnosis Records Per Encounter by Admit Date and Encounter Type, Past 5 Years|n/a|sql/section_iv/chart_iva_diagnosis_trend.sql
+Section IV: Data Completeness and Plausibility|Table IVB|Procedure Records Per Encounter, Overall and by Encounter Type|3.02|sql/section_iv/table_ivb_procedure_per_encounter.sql
+Section IV: Data Completeness and Plausibility|Chart IVB|Procedure Records Per Encounter by Admit Date and Encounter Type, Past 5 Years|n/a|sql/section_iv/chart_ivb_procedure_trend.sql
+Section IV: Data Completeness and Plausibility|Table IVC|Missing or Unknown Values, Required Tables|3.03|sql/section_iv/table_ivc_missing_unknown_required.sql
+Section IV: Data Completeness and Plausibility|Table IVD|Missing or Unknown Values, Optional Tables|3.03|sql/section_iv/table_ivd_missing_unknown_optional.sql
+Section IV: Data Completeness and Plausibility|Table IVE|Principal Diagnoses for Institutional Encounters|2.07, 3.06|sql/section_iv/table_ive_principal_diagnoses.sql
+Section IV: Data Completeness and Plausibility|Table IVF|Data Latency and Completeness of Encounter, Diagnosis and Procedure Data, Past 2 Years|3.07|sql/section_iv/table_ivf_data_latency_enc_dx_proc.sql
+Section IV: Data Completeness and Plausibility|Table IVG|Data Latency and Completeness of Vital, Prescription, and Lab Data, Past 2 Years|3.11|sql/section_iv/table_ivg_data_latency_vital_rx_lab.sql
+Section IV: Data Completeness and Plausibility|Table IVH|RXNORM Term Type Mapping|3.08, 3.15|sql/section_iv/table_ivh_rxnorm_mapping.sql
+Section IV: Data Completeness and Plausibility|Table IVI|Laboratory and Clinical Observation Result Data Completeness|3.09, 3.10, 3.12, 3.16, 3.17|sql/section_iv/table_ivi_lab_obs_completeness.sql
+Section IV: Data Completeness and Plausibility|Table IVI_Ref|Laboratory and Clinical Observation Result Data Completeness Definitions|n/a|n/a
+Section IV: Data Completeness and Plausibility|Table IVJ|Data Latency and Completeness of Medication Administration, Dispensing and Clinical Observation Data, Past 2 Years|3.14|sql/section_iv/table_ivj_data_latency_medadmin_disp_obs.sql
+Section V: Data Persistence|Table VA|Changes in Tables|4.01|sql/section_v/table_va_changes_in_tables.sql
+Section V: Data Persistence|Table VB|Changes in Selected Encounter Types and Domains|4.02|sql/section_v/table_vb_changes_encounter_types.sql
+Section V: Data Persistence|Table VC|Changes in Selected Code Types|4.03|sql/section_v/table_vc_changes_code_types.sql

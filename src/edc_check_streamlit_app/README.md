@@ -1,1 +1,0 @@
-Please use this google sheet to plan your next EDC check to work on and share your progress: https://docs.google.com/spreadsheets/d/1ZKniW9-pjrEi2Ds3gUyComyIH0x3OMdG/edit?gid=1872707745#gid=1872707745
