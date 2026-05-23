@@ -112,6 +112,23 @@ def _section_summary(slug: str, runnable: pd.DataFrame) -> None:
         )
 
 
+import re
+
+_ROMAN_TO_SECTION = {
+    "I":   "section_i",
+    "II":  "section_ii",
+    "III": "section_iii",
+    "IV":  "section_iv",
+    "V":   "section_v",
+}
+
+
+def _section_from_item(item_name: str) -> str:
+    m = re.match(r"Chart\s+(IV|III|II|I|V)", item_name, re.IGNORECASE)
+    return _ROMAN_TO_SECTION.get(m.group(1).upper(), "unknown") if m else "unknown"
+
+
+
 def _render_chart(records: list, item_name: str):
     if not records:
         st.info("No data returned.")
@@ -124,12 +141,21 @@ def _render_chart(records: list, item_name: str):
         if any(k in c.upper() for k in ("DATE", "MONTH", "YEAR", "PERIOD"))
     ]
     numeric_cols = df.select_dtypes(include="number").columns.tolist()
-    if date_cols and numeric_cols:
-        st.line_chart(df.set_index(date_cols[0])[numeric_cols])
-    elif len(df.columns) >= 2 and numeric_cols:
-        st.bar_chart(df.set_index(df.columns[0])[numeric_cols])
+
+    section = _section_from_item(item_name)
+    if section in ("section_i", "section_ii"):
+        from charts.section_i import render
+        render(df, date_cols, numeric_cols, item_name)
+    elif section == "section_iii":
+        from charts.section_iii import render
+        render(df, date_cols, numeric_cols, item_name)
+    elif section == "section_iv":
+        from charts.section_iv import render
+        render(df, date_cols, numeric_cols, item_name)
     else:
-        st.info("No chart available for this data layout.")
+        from charts.base import render_generic
+        render_generic(df, date_cols, numeric_cols)
+
     with st.expander("Raw data", expanded=False):
         st.dataframe(df, width="stretch", hide_index=True)
 
