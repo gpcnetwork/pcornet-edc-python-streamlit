@@ -1,70 +1,45 @@
--- DC 1.03: Required fields are present
--- Parameters: {{ db_name }}, {{ current_schema }}
-WITH required AS (
-    SELECT v.TABLE_NAME, v.COLUMN_NAME FROM (VALUES
-        -- DEMOGRAPHIC
-        ('DEMOGRAPHIC','PATID'),('DEMOGRAPHIC','BIRTH_DATE'),('DEMOGRAPHIC','SEX'),('DEMOGRAPHIC','HISPANIC'),('DEMOGRAPHIC','RACE'),
-        -- ENROLLMENT
-        ('ENROLLMENT','PATID'),('ENROLLMENT','ENR_START_DATE'),('ENROLLMENT','ENR_BASIS'),
-        -- DEATH
-        ('DEATH','PATID'),('DEATH','DEATH_SOURCE'),
-        -- ENCOUNTER
-        ('ENCOUNTER','ENCOUNTERID'),('ENCOUNTER','PATID'),('ENCOUNTER','ADMIT_DATE'),('ENCOUNTER','ENC_TYPE'),('ENCOUNTER','PROVIDERID'),
-        -- DIAGNOSIS
-        ('DIAGNOSIS','DIAGNOSISID'),('DIAGNOSIS','PATID'),('DIAGNOSIS','ENCOUNTERID'),('DIAGNOSIS','DX'),('DIAGNOSIS','DX_TYPE'),
-        -- PROCEDURES
-        ('PROCEDURES','PROCEDURESID'),('PROCEDURES','PATID'),('PROCEDURES','ENCOUNTERID'),('PROCEDURES','PX'),('PROCEDURES','PX_TYPE'),
-        -- VITAL
-        ('VITAL','VITALID'),
-        -- PRESCRIBING
-        ('PRESCRIBING','PRESCRIBINGID'),
-        -- DISPENSING
-        ('DISPENSING','DISPENSINGID'),
-        -- LAB_RESULT_CM
-        ('LAB_RESULT_CM','LAB_RESULT_CM_ID'),
-        -- HARVEST
-        ('HARVEST','NETWORKID'),('HARVEST','DATAMARTID'),('HARVEST','REFRESH_DEMOGRAPHIC_DATE'),
-        -- CONDITION
-        ('CONDITION','CONDITIONID'),
-        -- DEATH_CAUSE
-        ('DEATH_CAUSE','PATID'),('DEATH_CAUSE','DEATH_CAUSE'),('DEATH_CAUSE','DEATH_CAUSE_CODE'),('DEATH_CAUSE','DEATH_CAUSE_TYPE'),('DEATH_CAUSE','DEATH_CAUSE_SOURCE'),
-        -- PCORNET_TRIAL
-        ('PCORNET_TRIAL','PATID'),('PCORNET_TRIAL','TRIALID'),('PCORNET_TRIAL','PARTICIPANTID'),
-        -- PRO_CM
-        ('PRO_CM','PRO_CM_ID'),
-        -- PROVIDER
-        ('PROVIDER','PROVIDERID'),
-        -- MED_ADMIN
-        ('MED_ADMIN','MEDADMINID'),
-        -- OBS_CLIN
-        ('OBS_CLIN','OBSCLINID'),
-        -- OBS_GEN
-        ('OBS_GEN','OBSGENID'),
-        -- HASH_TOKEN
-        ('HASH_TOKEN','PATID'),('HASH_TOKEN','TOKEN_ENCRYPTION_KEY'),
-        -- LDS_ADDRESS_HISTORY
-        ('LDS_ADDRESS_HISTORY','ADDRESSID'),
-        -- IMMUNIZATION
-        ('IMMUNIZATION','IMMUNIZATIONID'),
-        -- LAB_HISTORY
-        ('LAB_HISTORY','LABHISTORYID'),
-        -- EXTERNAL_MEDS
-        ('EXTERNAL_MEDS','PATID'),('EXTERNAL_MEDS','EXTMEDID'),
-        -- PAT_RELATIONSHIP
-        ('PAT_RELATIONSHIP','PATID_1'),('PAT_RELATIONSHIP','PATID_2'),('PAT_RELATIONSHIP','RELATIONSHIP_TYPE')
-    ) v(TABLE_NAME, COLUMN_NAME)
+-- DC 1.03 | Table IID | Data Model Conformance | Required
+-- Required fields are not present. Driven by the external required-structure reference table
+-- ({{ required_structure_fqn }}) so the canonical spec is single-sourced.
+-- Parameters: {{ db_name }}, {{ current_schema }}, {{ required_structure_fqn }}
+WITH missing AS (
+    SELECT
+        UPPER(rs.MEMNAME) AS TABLE_NAME,
+        UPPER(rs.NAME)    AS COLUMN_NAME
+    FROM {{ required_structure_fqn }} rs
+    LEFT JOIN {{ db_name }}.INFORMATION_SCHEMA.COLUMNS isc
+        ON  UPPER(rs.MEMNAME)        = UPPER(isc.TABLE_NAME)
+        AND UPPER(rs.NAME)           = UPPER(isc.COLUMN_NAME)
+        AND UPPER(isc.TABLE_CATALOG) = UPPER('{{ db_name }}')
+        AND UPPER(isc.TABLE_SCHEMA)  = UPPER('{{ current_schema }}')
+    WHERE isc.COLUMN_NAME IS NULL
 ),
-existing AS (
-    SELECT TABLE_NAME, COLUMN_NAME FROM {{ db_name }}.INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = '{{ current_schema }}'
+summary AS (
+    SELECT
+        '1.03'                                                                AS CHECK_NUM,
+        'Required fields are not present'                                     AS DESCRIPTION,
+        CASE WHEN (SELECT COUNT(*) FROM missing) = 0 THEN 'Pass' ELSE 'Fail' END AS STATUS,
+        'SUMMARY'                                                             AS ROW_TYPE,
+        CAST(NULL AS VARCHAR)                                                 AS EXC_TABLE,
+        CAST(NULL AS VARCHAR)                                                 AS EXC_FIELD,
+        CAST(NULL AS VARCHAR)                                                 AS EXC_DETAIL,
+        CAST(NULL AS NUMBER)                                                  AS EXC_COUNT,
+        0                                                                     AS ROW_ORDER
 ),
-missing AS (
-    SELECT COUNT(*) AS MISSING_COUNT
-    FROM required r
-    WHERE NOT EXISTS (SELECT 1 FROM existing e WHERE e.TABLE_NAME = r.TABLE_NAME AND e.COLUMN_NAME = r.COLUMN_NAME)
+details AS (
+    SELECT
+        '1.03'                                AS CHECK_NUM,
+        'Required fields are not present'     AS DESCRIPTION,
+        'Fail'                                AS STATUS,
+        'DETAIL'                              AS ROW_TYPE,
+        m.TABLE_NAME                          AS EXC_TABLE,
+        m.COLUMN_NAME                         AS EXC_FIELD,
+        'Missing field'                       AS EXC_DETAIL,
+        CAST(NULL AS NUMBER)                  AS EXC_COUNT,
+        ROW_NUMBER() OVER (ORDER BY m.TABLE_NAME, m.COLUMN_NAME) AS ROW_ORDER
+    FROM missing m
 )
-SELECT
-    '1.03'                                                        AS CHECK_NUM,
-    'All required fields are present'                             AS DESCRIPTION,
-    CASE WHEN MISSING_COUNT = 0 THEN 'Pass' ELSE 'Fail' END      AS STATUS
-FROM missing
+SELECT * FROM summary
+UNION ALL
+SELECT * FROM details
+ORDER BY ROW_ORDER

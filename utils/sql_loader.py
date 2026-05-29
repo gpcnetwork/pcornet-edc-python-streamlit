@@ -1,7 +1,14 @@
 import datetime as _dt
+import os as _os
 from pathlib import Path
 
 from jinja2 import Environment
+
+_REF_SCHEMA = _os.environ.get("DQ_REF_SCHEMA", "PCORNET_DC_REF")
+_REQUIRED_STRUCTURE_FQN = _os.environ.get(
+    "DQ_REQUIRED_STRUCTURE_FQN",
+    "CHARACTERIZATION.EDC_REF.REQUIRED_STRUCTURE_RAW",
+)
 
 _env = Environment()
 _base = Path(__file__).parent.parent
@@ -43,4 +50,7 @@ class SqlLoader:
             year_1=str(ref_dt.replace(year=ref_dt.year - 1)),
             zip_table="ENCOUNTER",
             zip_column="ZIP",
+            loinc_ref_fqn=f"{_REF_SCHEMA}.LOINC",
+            rxnorm_ref_fqn=f"{_REF_SCHEMA}.RXNORM_CUI_REF",
+            required_structure_fqn=_REQUIRED_STRUCTURE_FQN,
         )

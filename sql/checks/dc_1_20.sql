@@ -1,27 +1,48 @@
--- DC 1.20: More than 5% of LOINC records in the LAB_RESULT_CM, PRO_CM,
--- and OBS_CLIN tables are panel codes based on the LOINC® panel type
--- Parameters: {{ current_schema }}, {{ cutoff_date }}
-
-WITH lab AS (
+-- DC 1.20 | Table IIG | Data Model Conformance | Investigative
+-- More than 5% of LOINC records in the LAB_RESULT_CM, PRO_CM, and OBS_CLIN tables are panel codes based on the LOINC panel type
+-- Parameters: {{ current_schema }}, {{ start_date }}, {{ loinc_ref_fqn }}
+WITH panel_ref AS (
+    {% if loinc_ref_fqn %}
+    SELECT DISTINCT TRIM(UPPER(LOINC_NUM)) AS LOINC_NUM
+    FROM {{ loinc_ref_fqn }}
+    WHERE LOINC_NUM IS NOT NULL AND TRIM(LOINC_NUM) <> ''
+      AND TRIM(PANEL_TYPE) = 'Panel'
+    {% else %}
+    SELECT NULL::VARCHAR AS LOINC_NUM WHERE 1=0
+    {% endif %}
+),
+lab AS (
     SELECT COUNT(*) AS TOTAL,
-           COUNT_IF(REGEXP_LIKE(LAB_LOINC, '^[0-9]+-[0-9]+$') AND LENGTH(LAB_LOINC) <= 7) AS PANEL_APPROX
-    FROM {{ current_schema }}.LAB_RESULT_CM
-    WHERE 1=1
-    {% if cutoff_date %}{% if cutoff_date %}AND RESULT_DATE >= {% if cutoff_date %}TO_DATE('{{ cutoff_date }}'){% else %}DATEADD('year', -5, CURRENT_DATE){% endif %}{% endif %}{% endif %} AND LAB_LOINC IS NOT NULL
+           SUM(CASE WHEN p.LOINC_NUM IS NOT NULL THEN 1 ELSE 0 END) AS PANELS
+    FROM {{ current_schema }}.LAB_RESULT_CM l
+    LEFT JOIN panel_ref p ON TRIM(UPPER(l.LAB_LOINC)) = p.LOINC_NUM
+    WHERE l.LAB_LOINC IS NOT NULL
+      AND l.RESULT_DATE >= TO_DATE('{{ start_date }}')
 ),
 obs AS (
     SELECT COUNT(*) AS TOTAL,
-           COUNT_IF(REGEXP_LIKE(OBSCLIN_CODE, '^[0-9]+-[0-9]+$') AND LENGTH(OBSCLIN_CODE) <= 7) AS PANEL_APPROX
-    FROM {{ current_schema }}.OBS_CLIN
-    WHERE 1=1
-    {% if cutoff_date %}{% if cutoff_date %}AND OBSCLIN_START_DATE >= {% if cutoff_date %}TO_DATE('{{ cutoff_date }}'){% else %}DATEADD('year', -5, CURRENT_DATE){% endif %}{% endif %}{% endif %} AND OBSCLIN_CODE IS NOT NULL
+           SUM(CASE WHEN p.LOINC_NUM IS NOT NULL THEN 1 ELSE 0 END) AS PANELS
+    FROM {{ current_schema }}.OBS_CLIN o
+    LEFT JOIN panel_ref p ON TRIM(UPPER(o.OBSCLIN_CODE)) = p.LOINC_NUM
+    WHERE o.OBSCLIN_CODE IS NOT NULL AND o.OBSCLIN_TYPE = 'LC'
+      AND o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}')
 ),
-combined AS (
-    SELECT SUM(TOTAL) AS TOTAL, SUM(PANEL_APPROX) AS PANELS FROM lab UNION ALL SELECT SUM(TOTAL), SUM(PANEL_APPROX) FROM obs
-),
-summary AS (SELECT SUM(TOTAL) AS T, SUM(PANELS) AS P FROM combined)
+pro AS (
+    SELECT COUNT(*) AS TOTAL,
+           SUM(CASE WHEN p.LOINC_NUM IS NOT NULL THEN 1 ELSE 0 END) AS PANELS
+    FROM {{ current_schema }}.PRO_CM pr
+    LEFT JOIN panel_ref p ON TRIM(UPPER(pr.PRO_CODE)) = p.LOINC_NUM
+    WHERE pr.PRO_CODE IS NOT NULL
+)
 SELECT
-    '1.20'                                                                  AS CHECK_NUM,
-    'More than 5% LOINC panel codes in LAB_RESULT_CM/PRO_CM/OBS_CLIN'      AS DESCRIPTION,
-    CASE WHEN 100.0 * P / NULLIF(T, 0) > 5 THEN 'Fail' ELSE 'Pass' END     AS STATUS
-FROM summary
+    '1.20'                                                                          AS CHECK_NUM,
+    'More than 5% of LOINC records in LAB_RESULT_CM/PRO_CM/OBS_CLIN are panel codes' AS DESCRIPTION,
+    CASE
+        WHEN GREATEST(
+            COALESCE(100.0 * lab.PANELS / NULLIF(lab.TOTAL, 0), 0),
+            COALESCE(100.0 * obs.PANELS / NULLIF(obs.TOTAL, 0), 0),
+            COALESCE(100.0 * pro.PANELS / NULLIF(pro.TOTAL, 0), 0)
+        ) > 5 THEN 'Fail'
+        ELSE 'Pass'
+    END                                                                             AS STATUS
+FROM lab, obs, pro

@@ -1,12 +1,13 @@
--- DC 3.05: < 50% patients with encounters having PROCEDURES records (DC 3.05)
--- Parameters: {{ current_schema }}, {{ cutoff_date }}
+-- DC 3.05 | Table IB | Data Completeness | Required
+-- Less than 50% of patients with encounters have PROCEDURES records
+-- Parameters: {{ current_schema }}, {{ start_date }}
 WITH enc_pats AS (
-    SELECT DISTINCT PATID FROM {{ current_schema }}.ENCOUNTER WHERE 1=1
- {% if cutoff_date %}{% if cutoff_date %}AND ADMIT_DATE >= {% if cutoff_date %}TO_DATE('{{ cutoff_date }}'){% else %}DATEADD('year', -5, CURRENT_DATE){% endif %}{% endif %}{% endif %}
+    SELECT DISTINCT PATID FROM {{ current_schema }}.ENCOUNTER
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
 ),
 px_pats AS (
-    SELECT DISTINCT PATID FROM {{ current_schema }}.PROCEDURES WHERE 1=1
- {% if cutoff_date %}{% if cutoff_date %}AND ADMIT_DATE >= {% if cutoff_date %}TO_DATE('{{ cutoff_date }}'){% else %}DATEADD('year', -5, CURRENT_DATE){% endif %}{% endif %}{% endif %}
+    SELECT DISTINCT PATID FROM {{ current_schema }}.PROCEDURES
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
 ),
 counts AS (
     SELECT COUNT(*) AS TOTAL,
@@ -15,6 +16,6 @@ counts AS (
 )
 SELECT
     '3.05'                                                          AS CHECK_NUM,
-    '< 50% patients with encounters having PROCEDURES records'      AS DESCRIPTION,
+    'Less than 50% of patients with encounters have PROCEDURES records' AS DESCRIPTION,
     CASE WHEN 100.0 * WITH_PX / NULLIF(TOTAL, 0) < 50 THEN 'Fail' ELSE 'Pass' END AS STATUS
 FROM counts

@@ -1,4 +1,5 @@
--- DC 1.18: Table refresh dates are not documented in the HARVEST table for populated tables
+-- DC 1.18 | Table ID | Data Model Conformance | Required
+-- Table refresh dates are not documented in the HARVEST table for populated tables
 -- Parameters: {{ current_schema }}
 WITH harvest AS (
     SELECT * FROM {{ current_schema }}.HARVEST LIMIT 1
@@ -18,7 +19,7 @@ checks AS (
 ),
 missing AS (SELECT COUNT(*) AS N FROM checks WHERE D IS NULL)
 SELECT
-    '1.18'                                                  AS CHECK_NUM,
+    '1.18'                                                                          AS CHECK_NUM,
     'Table refresh dates are not documented in the HARVEST table for populated tables' AS DESCRIPTION,
-    CASE WHEN N > 0 THEN 'Fail' ELSE 'Pass' END             AS STATUS
+    CASE WHEN N > 0 THEN 'Fail' ELSE 'Pass' END                                     AS STATUS
 FROM missing

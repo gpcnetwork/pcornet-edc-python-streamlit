@@ -46,14 +46,13 @@ all_types AS (
     SELECT 'Missing/NI/UN/OT', 10
 )
 SELECT
-    t.ENC_TYPE,
-    TO_VARCHAR(COALESCE(b.ENCOUNTERS, 0)) AS ENCOUNTERS,
-    TO_VARCHAR(COALESCE(b.PATIENTS, 0)) AS PATIENTS,
-    TO_VARCHAR(ROUND(COALESCE(b.ENCOUNTERS, 0) * 1.0 / NULLIF(b.PATIENTS, 0), 2)) AS ENC_PER_PATIENT,
-    TO_VARCHAR(COALESCE(b.ENC_WITH_PROVIDERID, 0)) AS ENC_WITH_PROVIDERID,
-    TO_VARCHAR(COALESCE(v.VISITS, 0)) AS VISITS,
-    TO_VARCHAR(ROUND(COALESCE(b.ENCOUNTERS, 0) * 1.0 / NULLIF(v.VISITS, 0), 2)) AS ENC_WITH_PROVIDERID_PER_VISIT,
-    'ENC_L3_N' AS SOURCE_TABLE
+    t.ENC_TYPE                                                                            AS "Encounter Type",
+    TO_VARCHAR(COALESCE(b.ENCOUNTERS, 0))                                                 AS "Encounters",
+    TO_VARCHAR(COALESCE(b.PATIENTS, 0))                                                   AS "Patients",
+    TO_VARCHAR(ROUND(COALESCE(b.ENCOUNTERS, 0) * 1.0 / NULLIF(b.PATIENTS, 0), 2))        AS "Encounters per Patient",
+    TO_VARCHAR(COALESCE(b.ENC_WITH_PROVIDERID, 0))                                        AS "Encounters with known PROVIDERID",
+    TO_VARCHAR(COALESCE(v.VISITS, 0))                                                     AS "Visit (unique combinations of PATID, ENC_TYPE, ADMIT_DATE, and PROVIDERID)",
+    TO_VARCHAR(ROUND(COALESCE(b.ENCOUNTERS, 0) * 1.0 / NULLIF(v.VISITS, 0), 2))          AS "Encounters with known PROVIDERID per visit"
 FROM all_types t
 LEFT JOIN by_type b ON b.ENC_TYPE_GRP = t.ENC_TYPE
 LEFT JOIN visits_by_type v ON v.ENC_TYPE_GRP = t.ENC_TYPE
@@ -63,16 +62,15 @@ UNION ALL
 SELECT
     'Total',
     TO_VARCHAR(SUM(ENCOUNTERS)),
-    TO_VARCHAR(COUNT(DISTINCT PATID)),
-    TO_VARCHAR(ROUND(SUM(ENCOUNTERS) * 1.0 / NULLIF(COUNT(DISTINCT PATID), 0), 2)),
+    TO_VARCHAR((SELECT COUNT(DISTINCT PATID) FROM all_enc)),
+    TO_VARCHAR(ROUND(SUM(ENCOUNTERS) * 1.0 / NULLIF((SELECT COUNT(DISTINCT PATID) FROM all_enc), 0), 2)),
     TO_VARCHAR(SUM(ENC_WITH_PROVIDERID)),
     TO_VARCHAR((SELECT COUNT(*) FROM visits)),
-    TO_VARCHAR(ROUND(SUM(ENCOUNTERS) * 1.0 / NULLIF((SELECT COUNT(*) FROM visits), 0), 2)),
-    'ENC_L3_N'
+    TO_VARCHAR(ROUND(SUM(ENCOUNTERS) * 1.0 / NULLIF((SELECT COUNT(*) FROM visits), 0), 2))
 FROM by_type
 
 ORDER BY
-    CASE ENC_TYPE
+    CASE "Encounter Type"
         WHEN 'AV' THEN 1 WHEN 'ED' THEN 2 WHEN 'EI' THEN 3 WHEN 'IC' THEN 4
         WHEN 'IP' THEN 5 WHEN 'IS' THEN 6 WHEN 'OA' THEN 7 WHEN 'OS' THEN 8
         WHEN 'TH' THEN 9 WHEN 'Missing/NI/UN/OT' THEN 10 ELSE 11 END

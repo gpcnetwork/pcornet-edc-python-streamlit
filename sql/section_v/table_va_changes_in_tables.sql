@@ -28,7 +28,7 @@ WITH all_tables AS (
         ('LAB_HISTORY',          21,  'LABHIST_L3_N'),
         ('EXTERNAL_MEDS',        22,  'EXTMED_L3_N'),
         ('PAT_RELATIONSHIP',     23,  'PATREL_L3_N')
-    AS v(TABLE_NAME, ROW_ORDER, SOURCE_TABLE)
+    AS v(TABLE_NAME, ROW_ORDER)
 ),
 crt AS (
     SELECT 'DEMOGRAPHIC'         AS T, COUNT(*) AS R, COUNT(DISTINCT PATID) AS P FROM {{ current_schema }}.DEMOGRAPHIC       UNION ALL

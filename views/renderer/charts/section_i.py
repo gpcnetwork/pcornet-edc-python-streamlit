@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
-
-from charts.base import zero_rule, zscore_axes
+import altair as alt
+from views.renderer.charts.base import zero_rule, zscore_axes
 
 _ENC_COLORS = {
     "AV (Ambulatory Visit)":        "#1f77b4",
@@ -35,7 +35,6 @@ _ENC_PANELS = [
 
 def _render_zscore_trend(df: pd.DataFrame, date_col: str) -> None:
     """Single-series Z-score trend chart (e.g. Chart IA – VITAL)."""
-    import altair as alt
 
     df = df.copy()
     df[date_col] = pd.to_datetime(df[date_col])
@@ -54,12 +53,12 @@ def _render_zscore_trend(df: pd.DataFrame, date_col: str) -> None:
         x=x, y=y, tooltip=tooltip
     )
     chart = (zero_rule() + lines + pts).properties(height=380)
-    st.altair_chart(chart.interactive(), use_container_width=True)
+    st.altair_chart(chart.interactive(), width="stretch")
 
 
 def _render_encounter_trend(df: pd.DataFrame, date_col: str) -> None:
     """3-panel Z-score trend chart for Chart IB (Encounter by ENC_TYPE)."""
-    import altair as alt
+
 
     df = df.copy()
     df[date_col] = pd.to_datetime(df[date_col])
@@ -111,7 +110,7 @@ def _render_encounter_trend(df: pd.DataFrame, date_col: str) -> None:
             .properties(height=340)
             .interactive()
         )
-        st.altair_chart(chart, use_container_width=True)
+        st.altair_chart(chart, width="stretch")
 
 
 _IC_ENC_TYPES = ["EI", "IP", "IS"]
@@ -119,7 +118,7 @@ _IC_ENC_TYPES = ["EI", "IP", "IS"]
 
 def _render_institutional_encounter_trend(df: pd.DataFrame, date_col: str) -> None:
     """Single full-width multi-series Z-score chart for Chart IC (EI, IP, IS by DISCHARGE_DATE)."""
-    import altair as alt
+
 
     df = df.copy()
     df[date_col] = pd.to_datetime(df[date_col])
@@ -153,12 +152,12 @@ def _render_institutional_encounter_trend(df: pd.DataFrame, date_col: str) -> No
     )
 
     chart = (zero_rule() + lines).properties(height=380).interactive()
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
 
 
 def _render_grouped_zscore_trend(df: pd.DataFrame, date_col: str, group_col: str) -> None:
     """Multi-series Z-score chart grouped by a categorical column (e.g. DEATH_SOURCE)."""
-    import altair as alt
+
 
     df = df.copy()
     df[date_col] = pd.to_datetime(df[date_col])
@@ -184,7 +183,7 @@ def _render_grouped_zscore_trend(df: pd.DataFrame, date_col: str, group_col: str
         )
     )
     chart = (zero_rule() + lines).properties(height=380).interactive()
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
 
 
 def render(df: pd.DataFrame, date_cols: list, numeric_cols: list, item_name: str = "") -> None:
@@ -205,3 +204,4 @@ def render(df: pd.DataFrame, date_cols: list, numeric_cols: list, item_name: str
         st.line_chart(df.set_index(date_cols[0])[numeric_cols])
     else:
         st.info("No chart available for this data layout.")
+

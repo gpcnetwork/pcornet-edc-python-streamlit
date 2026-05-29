@@ -1,6 +1,7 @@
 -- Table IIIC. Illogical Dates
 -- Patients with date relationships that are clinically implausible. Supports DC 2.03 (> 5%).
 -- Exceptions highlighted in blue and should be investigated and explained in the ETL ADD.
+-- Parameters: {{ current_schema }}, {{ start_date }}
 
 WITH enc_patients AS (
     SELECT COUNT(DISTINCT PATID) AS TOTAL FROM {{ current_schema }}.ENCOUNTER
@@ -12,214 +13,320 @@ birth_death AS (
     LEFT JOIN {{ current_schema }}.DEATH d ON d.PATID = dem.PATID
 )
 SELECT DATE_COMPARISON,
-       TO_VARCHAR(PATIENTS) AS PATIENTS,
-       TO_VARCHAR(ROUND(PATIENTS * 100.0 / NULLIF(ep.TOTAL, 0), 1)) || '%' AS PCT_OF_ENCOUNTER_PATIENTS,
-       SOURCE_TABLES
+       TO_VARCHAR(PATIENTS) AS "Patients",
+       TO_VARCHAR(ROUND(PATIENTS * 100.0 / NULLIF(ep.TOTAL, 0), 1)) || '%'
+           AS "Percentage of total patients in the ENCOUNTER table"
 FROM enc_patients ep,
 (
-    SELECT 'ENCOUNTER: Admit date before birth date' AS DATE_COMPARISON,
+    -- ── Group 1: < BIRTH_DATE ──────────────────────────────────────────────────
+    SELECT 'ADMIT_DATE < BIRTH_DATE' AS DATE_COMPARISON,
            COUNT(DISTINCT e.PATID) AS PATIENTS,
-           'ENC_L3_N; DEM_L3_N' AS SOURCE_TABLES, 1 AS ROW_ORDER
+           1 AS ROW_ORDER
     FROM {{ current_schema }}.ENCOUNTER e
     JOIN birth_death bd ON bd.PATID = e.PATID
     WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND e.ADMIT_DATE < bd.BIRTH_DATE
 
     UNION ALL
-    SELECT 'ENCOUNTER: Admit date after death date',
+    SELECT 'DISCHARGE_DATE < BIRTH_DATE',
            COUNT(DISTINCT e.PATID),
-           'ENC_L3_N; DEATH_L3_N', 2
+           2
     FROM {{ current_schema }}.ENCOUNTER e
     JOIN birth_death bd ON bd.PATID = e.PATID
-    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
-      AND e.ADMIT_DATE > bd.DEATH_DATE
+    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+      AND e.DISCHARGE_DATE IS NOT NULL AND e.DISCHARGE_DATE < bd.BIRTH_DATE
 
     UNION ALL
-    SELECT 'ENCOUNTER: Discharge date before admit date',
-           COUNT(DISTINCT PATID),
-           'ENC_L3_N', 3
-    FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND DISCHARGE_DATE IS NOT NULL
-      AND DISCHARGE_DATE < ADMIT_DATE
-
-    UNION ALL
-    SELECT 'VITAL: Measure date before birth date',
-           COUNT(DISTINCT v.PATID),
-           'VIT_L3_N; DEM_L3_N', 4
-    FROM {{ current_schema }}.VITAL v
-    JOIN birth_death bd ON bd.PATID = v.PATID
-    WHERE v.MEASURE_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
-      AND v.MEASURE_DATE < bd.BIRTH_DATE
-
-    UNION ALL
-    SELECT 'VITAL: Measure date after death date',
-           COUNT(DISTINCT v.PATID),
-           'VIT_L3_N; DEATH_L3_N', 5
-    FROM {{ current_schema }}.VITAL v
-    JOIN birth_death bd ON bd.PATID = v.PATID
-    WHERE v.MEASURE_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
-      AND v.MEASURE_DATE > bd.DEATH_DATE
-
-    UNION ALL
-    SELECT 'LAB_RESULT_CM: Result date before birth date',
-           COUNT(DISTINCT l.PATID),
-           'LAB_L3_N; DEM_L3_N', 6
-    FROM {{ current_schema }}.LAB_RESULT_CM l
-    JOIN birth_death bd ON bd.PATID = l.PATID
-    WHERE l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
-      AND l.RESULT_DATE < bd.BIRTH_DATE
-
-    UNION ALL
-    SELECT 'LAB_RESULT_CM: Result date after death date',
-           COUNT(DISTINCT l.PATID),
-           'LAB_L3_N; DEATH_L3_N', 7
-    FROM {{ current_schema }}.LAB_RESULT_CM l
-    JOIN birth_death bd ON bd.PATID = l.PATID
-    WHERE l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
-      AND l.RESULT_DATE > bd.DEATH_DATE
-
-    UNION ALL
-    SELECT 'LAB_RESULT_CM: Result date before lab order date',
-           COUNT(DISTINCT PATID),
-           'LAB_L3_N', 8
-    FROM {{ current_schema }}.LAB_RESULT_CM
-    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}') AND LAB_ORDER_DATE IS NOT NULL
-      AND RESULT_DATE < LAB_ORDER_DATE
-
-    UNION ALL
-    SELECT 'PRESCRIBING: Rx order date before birth date',
+    SELECT 'PX_DATE < BIRTH_DATE',
            COUNT(DISTINCT p.PATID),
-           'PRES_L3_N; DEM_L3_N', 9
-    FROM {{ current_schema }}.PRESCRIBING p
-    JOIN birth_death bd ON bd.PATID = p.PATID
-    WHERE p.RX_ORDER_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
-      AND p.RX_ORDER_DATE < bd.BIRTH_DATE
-
-    UNION ALL
-    SELECT 'PRESCRIBING: Rx order date after death date',
-           COUNT(DISTINCT p.PATID),
-           'PRES_L3_N; DEATH_L3_N', 10
-    FROM {{ current_schema }}.PRESCRIBING p
-    JOIN birth_death bd ON bd.PATID = p.PATID
-    WHERE p.RX_ORDER_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
-      AND p.RX_ORDER_DATE > bd.DEATH_DATE
-
-    UNION ALL
-    SELECT 'DISPENSING: Dispense date before birth date',
-           COUNT(DISTINCT d.PATID),
-           'DISP_L3_N; DEM_L3_N', 11
-    FROM {{ current_schema }}.DISPENSING d
-    JOIN birth_death bd ON bd.PATID = d.PATID
-    WHERE d.DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
-      AND d.DISPENSE_DATE < bd.BIRTH_DATE
-
-    UNION ALL
-    SELECT 'DISPENSING: Dispense date after death date',
-           COUNT(DISTINCT d.PATID),
-           'DISP_L3_N; DEATH_L3_N', 12
-    FROM {{ current_schema }}.DISPENSING d
-    JOIN birth_death bd ON bd.PATID = d.PATID
-    WHERE d.DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
-      AND d.DISPENSE_DATE > bd.DEATH_DATE
-
-    UNION ALL
-    SELECT 'PROCEDURES: Px date before birth date',
-           COUNT(DISTINCT p.PATID),
-           'PRO_L3_N; DEM_L3_N', 13
+           3
     FROM {{ current_schema }}.PROCEDURES p
     JOIN birth_death bd ON bd.PATID = p.PATID
     WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND p.PX_DATE < bd.BIRTH_DATE
 
     UNION ALL
-    SELECT 'PROCEDURES: Px date after death date',
+    SELECT 'DX_DATE < BIRTH_DATE',
+           COUNT(DISTINCT d.PATID),
+           4
+    FROM {{ current_schema }}.DIAGNOSIS d
+    JOIN birth_death bd ON bd.PATID = d.PATID
+    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+      AND d.ADMIT_DATE < bd.BIRTH_DATE
+
+    UNION ALL
+    SELECT 'MEASURE_DATE < BIRTH_DATE',
+           COUNT(DISTINCT v.PATID),
+           5
+    FROM {{ current_schema }}.VITAL v
+    JOIN birth_death bd ON bd.PATID = v.PATID
+    WHERE v.MEASURE_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+      AND v.MEASURE_DATE < bd.BIRTH_DATE
+
+    UNION ALL
+    SELECT 'DISPENSE_DATE < BIRTH_DATE',
+           COUNT(DISTINCT d.PATID),
+           6
+    FROM {{ current_schema }}.DISPENSING d
+    JOIN birth_death bd ON bd.PATID = d.PATID
+    WHERE d.DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+      AND d.DISPENSE_DATE < bd.BIRTH_DATE
+
+    UNION ALL
+    SELECT 'RX_START_DATE < BIRTH_DATE',
            COUNT(DISTINCT p.PATID),
-           'PRO_L3_N; DEATH_L3_N', 14
-    FROM {{ current_schema }}.PROCEDURES p
+           7
+    FROM {{ current_schema }}.PRESCRIBING p
     JOIN birth_death bd ON bd.PATID = p.PATID
-    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
-      AND p.PX_DATE > bd.DEATH_DATE
+    WHERE p.RX_START_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+      AND p.RX_START_DATE < bd.BIRTH_DATE
 
     UNION ALL
-    SELECT 'PROCEDURES: Px date > 5 days before encounter admit or after discharge',
-           COUNT(DISTINCT p.PATID),
-           'PRO_L3_N; ENC_L3_N', 15
-    FROM {{ current_schema }}.PROCEDURES p
-    JOIN {{ current_schema }}.ENCOUNTER e ON e.ENCOUNTERID = p.ENCOUNTERID
-    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE IS NOT NULL
-      AND e.DISCHARGE_DATE IS NOT NULL
-      AND (p.PX_DATE < DATEADD(day, -5, e.ADMIT_DATE)
-           OR p.PX_DATE > DATEADD(day, 5, e.DISCHARGE_DATE))
+    SELECT 'RESULT_DATE < BIRTH_DATE',
+           COUNT(DISTINCT l.PATID),
+           8
+    FROM {{ current_schema }}.LAB_RESULT_CM l
+    JOIN birth_death bd ON bd.PATID = l.PATID
+    WHERE l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+      AND l.RESULT_DATE < bd.BIRTH_DATE
 
     UNION ALL
-    SELECT 'MED_ADMIN: Start date before birth date',
+    SELECT 'DEATH_DATE < BIRTH_DATE',
+           COUNT(DISTINCT PATID),
+           9
+    FROM birth_death
+    WHERE DEATH_DATE IS NOT NULL AND BIRTH_DATE IS NOT NULL
+      AND DEATH_DATE < BIRTH_DATE
+
+    UNION ALL
+    SELECT 'MEDADMIN_START_DATE < BIRTH_DATE',
            COUNT(DISTINCT m.PATID),
-           'MEDA_L3_N; DEM_L3_N', 16
+           10
     FROM {{ current_schema }}.MED_ADMIN m
     JOIN birth_death bd ON bd.PATID = m.PATID
     WHERE m.MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND m.MEDADMIN_START_DATE < bd.BIRTH_DATE
 
     UNION ALL
-    SELECT 'MED_ADMIN: Start date after death date',
-           COUNT(DISTINCT m.PATID),
-           'MEDA_L3_N; DEATH_L3_N', 17
-    FROM {{ current_schema }}.MED_ADMIN m
-    JOIN birth_death bd ON bd.PATID = m.PATID
-    WHERE m.MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
-      AND m.MEDADMIN_START_DATE > bd.DEATH_DATE
-
-    UNION ALL
-    SELECT 'OBS_CLIN: Start date before birth date',
+    SELECT 'OBSCLIN_START_DATE < BIRTH_DATE',
            COUNT(DISTINCT o.PATID),
-           'OBSCLIN_L3_N; DEM_L3_N', 18
+           11
     FROM {{ current_schema }}.OBS_CLIN o
     JOIN birth_death bd ON bd.PATID = o.PATID
     WHERE o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND o.OBSCLIN_START_DATE < bd.BIRTH_DATE
 
     UNION ALL
-    SELECT 'OBS_CLIN: Stop date before start date',
-           COUNT(DISTINCT PATID),
-           'OBSCLIN_L3_N', 19
-    FROM {{ current_schema }}.OBS_CLIN
-    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSCLIN_STOP_DATE IS NOT NULL
-      AND OBSCLIN_STOP_DATE < OBSCLIN_START_DATE
-
-    UNION ALL
-    SELECT 'OBS_GEN: Start date before birth date',
+    SELECT 'OBSGEN_START_DATE < BIRTH_DATE',
            COUNT(DISTINCT o.PATID),
-           'OBSGEN_L3_N; DEM_L3_N', 20
+           12
     FROM {{ current_schema }}.OBS_GEN o
     JOIN birth_death bd ON bd.PATID = o.PATID
     WHERE o.OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND o.OBSGEN_START_DATE < bd.BIRTH_DATE
 
     UNION ALL
-    SELECT 'OBS_GEN: Stop date before start date',
+    SELECT 'VX_RECORD_DATE < BIRTH_DATE',
+           COUNT(DISTINCT i.PATID),
+           13
+    FROM {{ current_schema }}.IMMUNIZATION i
+    JOIN birth_death bd ON bd.PATID = i.PATID
+    WHERE bd.BIRTH_DATE IS NOT NULL
+      AND i.VX_RECORD_DATE < bd.BIRTH_DATE
+
+    -- ── Group 2: > DEATH_DATE ─────────────────────────────────────────────────
+    UNION ALL
+    SELECT 'ADMIT_DATE > DEATH_DATE',
+           COUNT(DISTINCT e.PATID),
+           14
+    FROM {{ current_schema }}.ENCOUNTER e
+    JOIN birth_death bd ON bd.PATID = e.PATID
+    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND e.ADMIT_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'DISCHARGE_DATE > DEATH_DATE',
+           COUNT(DISTINCT e.PATID),
+           15
+    FROM {{ current_schema }}.ENCOUNTER e
+    JOIN birth_death bd ON bd.PATID = e.PATID
+    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND e.DISCHARGE_DATE IS NOT NULL AND e.DISCHARGE_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'PX_DATE > DEATH_DATE',
+           COUNT(DISTINCT p.PATID),
+           16
+    FROM {{ current_schema }}.PROCEDURES p
+    JOIN birth_death bd ON bd.PATID = p.PATID
+    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND p.PX_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'DX_DATE > DEATH_DATE',
+           COUNT(DISTINCT d.PATID),
+           17
+    FROM {{ current_schema }}.DIAGNOSIS d
+    JOIN birth_death bd ON bd.PATID = d.PATID
+    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND d.ADMIT_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'MEASURE_DATE > DEATH_DATE',
+           COUNT(DISTINCT v.PATID),
+           18
+    FROM {{ current_schema }}.VITAL v
+    JOIN birth_death bd ON bd.PATID = v.PATID
+    WHERE v.MEASURE_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND v.MEASURE_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'DISPENSE_DATE > DEATH_DATE',
+           COUNT(DISTINCT d.PATID),
+           19
+    FROM {{ current_schema }}.DISPENSING d
+    JOIN birth_death bd ON bd.PATID = d.PATID
+    WHERE d.DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND d.DISPENSE_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'RX_START_DATE > DEATH_DATE',
+           COUNT(DISTINCT p.PATID),
+           20
+    FROM {{ current_schema }}.PRESCRIBING p
+    JOIN birth_death bd ON bd.PATID = p.PATID
+    WHERE p.RX_START_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND p.RX_START_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'RESULT_DATE > DEATH_DATE',
+           COUNT(DISTINCT l.PATID),
+           21
+    FROM {{ current_schema }}.LAB_RESULT_CM l
+    JOIN birth_death bd ON bd.PATID = l.PATID
+    WHERE l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND l.RESULT_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'MEDADMIN_START_DATE > DEATH_DATE',
+           COUNT(DISTINCT m.PATID),
+           22
+    FROM {{ current_schema }}.MED_ADMIN m
+    JOIN birth_death bd ON bd.PATID = m.PATID
+    WHERE m.MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND m.MEDADMIN_START_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'OBSCLIN_START_DATE > DEATH_DATE',
+           COUNT(DISTINCT o.PATID),
+           23
+    FROM {{ current_schema }}.OBS_CLIN o
+    JOIN birth_death bd ON bd.PATID = o.PATID
+    WHERE o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND o.OBSCLIN_START_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'OBSGEN_START_DATE > DEATH_DATE',
+           COUNT(DISTINCT o.PATID),
+           24
+    FROM {{ current_schema }}.OBS_GEN o
+    JOIN birth_death bd ON bd.PATID = o.PATID
+    WHERE o.OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+      AND o.OBSGEN_START_DATE > bd.DEATH_DATE
+
+    UNION ALL
+    SELECT 'VX_RECORD_DATE > DEATH_DATE',
+           COUNT(DISTINCT i.PATID),
+           25
+    FROM {{ current_schema }}.IMMUNIZATION i
+    JOIN birth_death bd ON bd.PATID = i.PATID
+    WHERE bd.DEATH_DATE IS NOT NULL
+      AND i.VX_RECORD_DATE > bd.DEATH_DATE
+
+    -- ── Group 3: Logical date comparisons ────────────────────────────────────
+    UNION ALL
+    SELECT 'ADMIT_DATE > DISCHARGE_DATE',
            COUNT(DISTINCT PATID),
-           'OBSGEN_L3_N', 21
+           26
+    FROM {{ current_schema }}.ENCOUNTER
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND DISCHARGE_DATE IS NOT NULL
+      AND DISCHARGE_DATE < ADMIT_DATE
+
+    UNION ALL
+    SELECT 'PX_DATE is More Than 5 Days Prior To The ADMIT_DATE',
+           COUNT(DISTINCT p.PATID),
+           27
+    FROM {{ current_schema }}.PROCEDURES p
+    JOIN {{ current_schema }}.ENCOUNTER e ON e.ENCOUNTERID = p.ENCOUNTERID
+    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE IS NOT NULL
+      AND p.PX_DATE < DATEADD(day, -5, e.ADMIT_DATE)
+
+    UNION ALL
+    SELECT 'PX_DATE is More Than 5 Days After The DISCHARGE_DATE',
+           COUNT(DISTINCT p.PATID),
+           28
+    FROM {{ current_schema }}.PROCEDURES p
+    JOIN {{ current_schema }}.ENCOUNTER e ON e.ENCOUNTERID = p.ENCOUNTERID
+    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND e.DISCHARGE_DATE IS NOT NULL
+      AND p.PX_DATE > DATEADD(day, 5, e.DISCHARGE_DATE)
+
+    UNION ALL
+    SELECT 'DX_DATE is More Than 5 Days Prior To The ADMIT_DATE',
+           COUNT(DISTINCT d.PATID),
+           29
+    FROM {{ current_schema }}.DIAGNOSIS d
+    JOIN {{ current_schema }}.ENCOUNTER e ON e.ENCOUNTERID = d.ENCOUNTERID
+    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE IS NOT NULL
+      AND d.ADMIT_DATE < DATEADD(day, -5, e.ADMIT_DATE)
+
+    UNION ALL
+    SELECT 'DX_DATE is More Than 5 Days After The DISCHARGE_DATE',
+           COUNT(DISTINCT d.PATID),
+           30
+    FROM {{ current_schema }}.DIAGNOSIS d
+    JOIN {{ current_schema }}.ENCOUNTER e ON e.ENCOUNTERID = d.ENCOUNTERID
+    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.DISCHARGE_DATE IS NOT NULL
+      AND d.ADMIT_DATE > DATEADD(day, 5, e.DISCHARGE_DATE)
+
+    UNION ALL
+    SELECT 'OBSCLIN_START_DATE > OBSCLIN_STOP_DATE',
+           COUNT(DISTINCT PATID),
+           31
+    FROM {{ current_schema }}.OBS_CLIN
+    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSCLIN_STOP_DATE IS NOT NULL
+      AND OBSCLIN_START_DATE > OBSCLIN_STOP_DATE
+
+    UNION ALL
+    SELECT 'OBSGEN_START_DATE > OBSGEN_STOP_DATE',
+           COUNT(DISTINCT PATID),
+           32
     FROM {{ current_schema }}.OBS_GEN
     WHERE OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSGEN_STOP_DATE IS NOT NULL
-      AND OBSGEN_STOP_DATE < OBSGEN_START_DATE
+      AND OBSGEN_START_DATE > OBSGEN_STOP_DATE
 
     UNION ALL
-    SELECT 'CONDITION: Report date before birth date',
-           COUNT(DISTINCT c.PATID),
-           'COND_L3_N; DEM_L3_N', 22
-    FROM {{ current_schema }}.CONDITION c
-    JOIN birth_death bd ON bd.PATID = c.PATID
-    WHERE c.REPORT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
-      AND c.REPORT_DATE < bd.BIRTH_DATE
+    SELECT 'RELATIONSHIP_START > RELATIONSHIP_END',
+           COUNT(DISTINCT PATID_1),
+           33
+    FROM {{ current_schema }}.PAT_RELATIONSHIP
+    WHERE RELATIONSHIP_START IS NOT NULL AND RELATIONSHIP_END IS NOT NULL
+      AND RELATIONSHIP_START > RELATIONSHIP_END
 
     UNION ALL
-    SELECT 'CONDITION: Report date after death date',
-           COUNT(DISTINCT c.PATID),
-           'COND_L3_N; DEATH_L3_N', 23
-    FROM {{ current_schema }}.CONDITION c
-    JOIN birth_death bd ON bd.PATID = c.PATID
-    WHERE c.REPORT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
-      AND c.REPORT_DATE > bd.DEATH_DATE
+    SELECT 'EXT_PAT_START_DATE > EXT_PAT_END_DATE',
+           COUNT(DISTINCT PATID),
+           34
+    FROM {{ current_schema }}.EXTERNAL_MEDS
+    WHERE EXT_PAT_START_DATE IS NOT NULL AND EXT_PAT_END_DATE IS NOT NULL
+      AND EXT_PAT_START_DATE > EXT_PAT_END_DATE
+
+    UNION ALL
+    SELECT 'MEDADMIN_START_DATE > MEDADMIN_STOP_DATE',
+           COUNT(DISTINCT PATID),
+           35
+    FROM {{ current_schema }}.MED_ADMIN
+    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND MEDADMIN_STOP_DATE IS NOT NULL
+      AND MEDADMIN_START_DATE > MEDADMIN_STOP_DATE
 
 ) checks
 ORDER BY ROW_ORDER

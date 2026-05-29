@@ -9,49 +9,53 @@
 -- completeness between the tables) should be investigated and explained in the ETL ADD.
 
 WITH months AS (
-    SELECT DATE_TRUNC('month', DATEADD(month, -seq, TO_DATE('{{ report_month }}'))) AS MONTH_START
+    SELECT
+        DATE_TRUNC('month', DATEADD(month, -seq, TO_DATE('{{ report_month }}'))) AS MONTH_START,
+        seq AS OFFSET
     FROM (SELECT ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 AS seq FROM TABLE(GENERATOR(ROWCOUNT => 24)))
 ),
 enc_monthly AS (
     SELECT DATE_TRUNC('month', ADMIT_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.ENCOUNTER
     WHERE ENC_TYPE IN ('AV','TH','ED','EI','IP')
-    GROUP BY DATE_TRUNC('month', ADMIT_DATE)
+    GROUP BY 1
 ),
 dx_monthly AS (
     SELECT DATE_TRUNC('month', ADMIT_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.DIAGNOSIS
     WHERE ENC_TYPE IN ('AV','TH','ED','EI','IP')
-    GROUP BY DATE_TRUNC('month', ADMIT_DATE)
+    GROUP BY 1
 ),
 px_monthly AS (
     SELECT DATE_TRUNC('month', PX_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.PROCEDURES
     WHERE ENC_TYPE IN ('AV','TH','ED','EI','IP')
-    GROUP BY DATE_TRUNC('month', PX_DATE)
+    GROUP BY 1
 ),
 combined AS (
-    SELECT 'ENCOUNTER' AS DOMAIN, m.MONTH_START, COALESCE(d.CNT, 0) AS RECORD_COUNT
+    SELECT 'ENCOUNTER' AS DOMAIN, m.MONTH_START, m.OFFSET, COALESCE(d.CNT, 0) AS RECORD_COUNT
     FROM months m LEFT JOIN enc_monthly d ON d.MONTH_START = m.MONTH_START
     UNION ALL
-    SELECT 'DIAGNOSIS', m.MONTH_START, COALESCE(d.CNT, 0)
+    SELECT 'DIAGNOSIS', m.MONTH_START, m.OFFSET, COALESCE(d.CNT, 0)
     FROM months m LEFT JOIN dx_monthly d ON d.MONTH_START = m.MONTH_START
     UNION ALL
-    SELECT 'PROCEDURES', m.MONTH_START, COALESCE(d.CNT, 0)
+    SELECT 'PROCEDURES', m.MONTH_START, m.OFFSET, COALESCE(d.CNT, 0)
     FROM months m LEFT JOIN px_monthly d ON d.MONTH_START = m.MONTH_START
 ),
-with_avg AS (
-    SELECT DOMAIN, MONTH_START, RECORD_COUNT,
-           AVG(RECORD_COUNT) OVER (
-               PARTITION BY DOMAIN
-               ORDER BY MONTH_START
-               ROWS BETWEEN 13 PRECEDING AND 2 PRECEDING
-           ) AS PRIOR_YEAR_AVG
+benchmark AS (
+    SELECT DOMAIN, AVG(RECORD_COUNT) AS BENCH_AVG
     FROM combined
+    WHERE OFFSET BETWEEN 12 AND 23
+    GROUP BY DOMAIN
 )
-SELECT DOMAIN, MONTH_START, RECORD_COUNT, ROUND(PRIOR_YEAR_AVG, 0) AS PRIOR_YEAR_AVG,
-    CASE WHEN PRIOR_YEAR_AVG > 0
-         THEN ROUND(100.0 * RECORD_COUNT / PRIOR_YEAR_AVG, 1)
-         ELSE NULL END AS COMPLETENESS_PCT
-FROM with_avg
-ORDER BY DOMAIN, MONTH_START
+SELECT
+    c.DOMAIN,
+    c.MONTH_START,
+    c.RECORD_COUNT,
+    ROUND(b.BENCH_AVG, 0)                                              AS PRIOR_YEAR_AVG,
+    CASE WHEN b.BENCH_AVG > 0
+         THEN ROUND(100.0 * c.RECORD_COUNT / b.BENCH_AVG, 1)
+         ELSE NULL END                                                  AS COMPLETENESS_PCT
+FROM combined c
+JOIN benchmark b ON b.DOMAIN = c.DOMAIN
+ORDER BY c.DOMAIN, c.MONTH_START

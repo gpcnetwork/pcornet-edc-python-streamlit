@@ -8,32 +8,15 @@ from utils.constants import fmt_ms
 from utils.db import get_meta_conn
 from utils.run_repository import RunRepository
 from utils.sql_loader import SqlLoader
+from views.renderer.charts.base import (
+    EXCEPTION_MARKERS as _EXCEPTION_MARKERS,
+    count_exceptions  as _count_exceptions,
+    pct_exception_styles as _pct_exception_styles,
+    render_table_generic as _render_table_generic,
+)
 
 _STATUS_BADGE = {"complete": "✅", "exception": "⚠️", "error": "❌", "pending": "⬜"}
 _PAGE_SIZE = 10
-
-_EXCEPTION_MARKERS = {
-    "HAS_PK_ERROR":   "Yes",
-    "REFRESH_STATUS": "Missing",
-    "IS_OUTLIER":     "Yes",
-}
-
-
-def _pct_exception_styles(df: pd.DataFrame) -> pd.DataFrame:
-    """Blue cell background for any PCT_CHANGE column where value < -5.0."""
-    styles = pd.DataFrame("", index=df.index, columns=df.columns)
-    pct_cols = [
-        c for c in df.columns
-        if "PCT_CHANGE" in (c[1] if isinstance(c, tuple) else c).upper()
-    ]
-    for col in pct_cols:
-        for idx in df.index:
-            try:
-                if float(df.at[idx, col]) < -5.0:
-                    styles.at[idx, col] = "background-color: #cfe2ff"
-            except (ValueError, TypeError):
-                pass
-    return styles
 
 
 def _slug(section_name: str) -> str:
@@ -68,17 +51,6 @@ def _ensure_run_id(slug: str, session, schema: str, cutoff_date,
         )
         st.session_state[key] = run_id
     return st.session_state[key]
-
-
-def _count_exceptions(result: list) -> int:
-    if not result:
-        return 0
-    total = 0
-    for row in result:
-        d = row if isinstance(row, dict) else {col: getattr(row, col) for col in row._fields}
-        if any(str(d.get(col, "")) == val for col, val in _EXCEPTION_MARKERS.items()):
-            total += 1
-    return total
 
 
 def _section_summary(slug: str, runnable: pd.DataFrame) -> None:
@@ -124,7 +96,7 @@ _ROMAN_TO_SECTION = {
 
 
 def _section_from_item(item_name: str) -> str:
-    m = re.match(r"Chart\s+(IV|III|II|I|V)", item_name, re.IGNORECASE)
+    m = re.match(r"(?:Chart|Table)\s+(IV|III|II|I|V)", item_name, re.IGNORECASE)
     return _ROMAN_TO_SECTION.get(m.group(1).upper(), "unknown") if m else "unknown"
 
 
@@ -144,16 +116,16 @@ def _render_chart(records: list, item_name: str):
 
     section = _section_from_item(item_name)
     if section in ("section_i", "section_ii"):
-        from charts.section_i import render
+        from views.renderer.charts.section_i import render
         render(df, date_cols, numeric_cols, item_name)
     elif section == "section_iii":
-        from charts.section_iii import render
+        from views.renderer.charts.section_iii import render
         render(df, date_cols, numeric_cols, item_name)
     elif section == "section_iv":
-        from charts.section_iv import render
+        from views.renderer.charts.section_iv import render
         render(df, date_cols, numeric_cols, item_name)
     else:
-        from charts.base import render_generic
+        from views.renderer.charts.base import render_generic
         render_generic(df, date_cols, numeric_cols)
 
     with st.expander("Raw data", expanded=False):
@@ -169,54 +141,21 @@ def _render_result(result: list, item_key: str, is_chart: bool, force_expand: bo
         if is_chart:
             _render_chart(result, item_key)
             return
-        dicts = result if isinstance(result[0], dict) else \
-                [{col: getattr(r, col) for col in r._fields} for r in result]
-        column_order = None
-        if dicts and isinstance(dicts[-1], dict) and "__columns__" in dicts[-1]:
-            column_order = dicts[-1]["__columns__"]
-            dicts = dicts[:-1]
-        df = pd.DataFrame(dicts)
-        if column_order:
-            ordered = [c for c in column_order if c in df.columns]
-            df = df[ordered + [c for c in df.columns if c not in ordered]]
 
-        # Build MultiIndex display DataFrame if any column uses __ grouping separator
-        if any("__" in c for c in df.columns):
-            display_df = df.copy()
-            display_df.columns = pd.MultiIndex.from_tuples([
-                tuple(c.split("__", 1)) if "__" in c else ("", c)
-                for c in df.columns
-            ])
+        section = _section_from_item(item_key)
+        if section in ("section_i", "section_ii"):
+            from views.renderer.tables.section_i import render_table as _render_tbl
+        elif section == "section_iii":
+            from views.renderer.tables.section_iii import render_table as _render_tbl
+        elif section == "section_iv":
+            from views.renderer.tables.section_iv import render_table as _render_tbl
         else:
-            display_df = df
+            _render_tbl = None
 
-        def _highlight(row):
-            is_exc = any(
-                str(row.get(col, "")) == val
-                for col, val in _EXCEPTION_MARKERS.items()
-                if col in row.index
-            )
-            return ["background-color: #fde8e8" if is_exc else ""] * len(row)
+        if _render_tbl is not None and _render_tbl(result, item_key):
+            return
 
-        has_pct_cols = any(
-            "PCT_CHANGE" in (c[1] if isinstance(c, tuple) else c).upper()
-            for c in display_df.columns
-        )
-        if n_exc or has_pct_cols:
-            styled = display_df.style.apply(_highlight, axis=1)
-            if has_pct_cols:
-                styled = styled.apply(_pct_exception_styles, axis=None)
-            styled = styled.format(na_rep="---")
-        else:
-            styled = display_df
-        st.dataframe(styled, width="stretch", hide_index=True)
-        st.download_button(
-            "⬇ Download CSV",
-            df.to_csv(index=False),
-            file_name=f"{item_key.lower().replace(' ', '_')}.csv",
-            mime="text/csv",
-            key=f"dl_{item_key}",
-        )
+        _render_table_generic(result, item_key)
 
 
 def render_section_view(session, section_name: str, items_df: pd.DataFrame,

@@ -1,16 +1,23 @@
--- DC 3.08: Less than 80% of prescribing orders are mapped to a RXCUI which fully
--- specifies the ingredient, strength and dose form (i.e. RXCUI codes that have
--- a Term Type of SCD, SBD,BPCK, or GPCK)
--- Parameters: {{ current_schema }}, {{ cutoff_date }}
-WITH rx AS (
+-- DC 3.08 | Table IVH | Data Completeness | Investigative
+-- Less than 80% of prescribing orders are mapped to a RXCUI which fully specifies the ingredient,
+-- strength and dose form (i.e. RXCUI codes that have a Term Type of SCD, SBD, BPCK, or GPCK)
+-- Parameters: {{ current_schema }}, {{ rxnorm_ref_fqn }}, {{ start_date }}
+WITH rxnorm_tier1 AS (
+    SELECT TRIM(RXNORM_CUI)::VARCHAR AS rxcui_str
+    FROM {{ rxnorm_ref_fqn }}
+    WHERE RXNORM_CUI IS NOT NULL
+      AND UPPER(TRIM(RXNORM_CUI_TIER)) = 'TIER 1'
+),
+rx AS (
     SELECT COUNT(*) AS TOTAL,
-           COUNT_IF(RXNORM_CUI IS NOT NULL AND RXNORM_CUI NOT IN ('NI','UN','OT')) AS MAPPED
-    FROM {{ current_schema }}.PRESCRIBING
-    WHERE 1=1
-    {% if cutoff_date %}{% if cutoff_date %}AND RX_ORDER_DATE >= {% if cutoff_date %}TO_DATE('{{ cutoff_date }}'){% else %}DATEADD('year', -5, CURRENT_DATE){% endif %}{% endif %}{% endif %}
+           COUNT_IF(EXISTS (
+               SELECT 1 FROM rxnorm_tier1 r WHERE r.rxcui_str = TRIM(p.RXNORM_CUI)::VARCHAR
+           )) AS TIER1_MAPPED
+    FROM {{ current_schema }}.PRESCRIBING p
+    WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}')
 )
 SELECT
-    '3.08'                                                              AS CHECK_NUM,
-    '< 80% prescribing orders mapped to Tier 1 RXCUI'                  AS DESCRIPTION,
-    CASE WHEN 100.0 * MAPPED / NULLIF(TOTAL, 0) < 80 THEN 'Fail' ELSE 'Pass' END AS STATUS
+    '3.08'                                                                                              AS CHECK_NUM,
+    'Less than 80% of prescribing orders mapped to a Tier 1 RXCUI (SCD, SBD, BPCK, or GPCK)'         AS DESCRIPTION,
+    CASE WHEN 100.0 * TIER1_MAPPED / NULLIF(TOTAL, 0) < 80 THEN 'Fail' ELSE 'Pass' END                AS STATUS
 FROM rx

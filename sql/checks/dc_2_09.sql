@@ -1,19 +1,23 @@
--- DC 2.09: Less than 80% of patients with a face-to-face encounter during the past 5
--- years have at least 1 face-to-face diagnosis and 1 vital measurement.
--- Face-to-face is defined as an encounter type of ambulatory visit (AV),
--- emergency department (ED), emergency department admit to inpatient
--- hospital stay (EI), inpatient hospital (IP), or observation stay (OS).
--- Parameters: {{ current_schema }}, {{ cutoff_date }}
+-- DC 2.09 | Table IB | Data Plausibility | Investigative
+-- Less than 80% of patients with a face-to-face encounter during the past 5 years have at least 1
+-- face-to-face diagnosis and 1 vital measurement. Face-to-face is defined as an encounter type of
+-- ambulatory visit (AV), emergency department (ED), emergency department admit to inpatient hospital
+-- stay (EI), inpatient hospital (IP), or observation stay (OS).
+-- Parameters: {{ current_schema }}, {{ start_date }}
 WITH f2f_pats AS (
     SELECT DISTINCT PATID
     FROM {{ current_schema }}.ENCOUNTER
     WHERE ENC_TYPE IN ('AV','ED','EI','IP','OS')
-      {% if cutoff_date %}{% if cutoff_date %}AND ADMIT_DATE >= {% if cutoff_date %}TO_DATE('{{ cutoff_date }}'){% else %}DATEADD('year', -5, CURRENT_DATE){% endif %}{% endif %}{% endif %}
+      AND ADMIT_DATE >= TO_DATE('{{ start_date }}')
 ),
-with_dx AS (SELECT DISTINCT PATID FROM {{ current_schema }}.DIAGNOSIS WHERE 1=1
- {% if cutoff_date %}{% if cutoff_date %}AND ADMIT_DATE >= {% if cutoff_date %}TO_DATE('{{ cutoff_date }}'){% else %}DATEADD('year', -5, CURRENT_DATE){% endif %}{% endif %}{% endif %}),
-with_vital AS (SELECT DISTINCT PATID FROM {{ current_schema }}.VITAL WHERE 1=1
- {% if cutoff_date %}{% if cutoff_date %}AND MEASURE_DATE >= {% if cutoff_date %}TO_DATE('{{ cutoff_date }}'){% else %}DATEADD('year', -5, CURRENT_DATE){% endif %}{% endif %}{% endif %}),
+with_dx AS (
+    SELECT DISTINCT PATID FROM {{ current_schema }}.DIAGNOSIS
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+),
+with_vital AS (
+    SELECT DISTINCT PATID FROM {{ current_schema }}.VITAL
+    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}')
+),
 counts AS (
     SELECT
         COUNT(*) AS TOTAL,
@@ -22,7 +26,7 @@ counts AS (
     FROM f2f_pats f
 )
 SELECT
-    '2.09'                                              AS CHECK_NUM,
-    '< 80% F2F patients with DX + VITAL'                AS DESCRIPTION,
-    CASE WHEN 100.0 * COMPLETE / NULLIF(TOTAL, 0) < 80 THEN 'Fail' ELSE 'Pass' END AS STATUS
+    '2.09'                                                                              AS CHECK_NUM,
+    'Less than 80% of face-to-face patients have at least 1 diagnosis and 1 vital'     AS DESCRIPTION,
+    CASE WHEN 100.0 * COMPLETE / NULLIF(TOTAL, 0) < 80 THEN 'Fail' ELSE 'Pass' END     AS STATUS
 FROM counts

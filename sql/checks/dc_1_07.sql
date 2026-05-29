@@ -1,19 +1,92 @@
--- DC 1.07: Required fields have non-permissible missing values
+-- DC 1.07 | Table IIC | Data Model Conformance | Required
+-- Required fields have non-permissible missing values (NULL or empty string). Permissible tokens
+-- like NI/UN/OT are NOT flagged. Evaluated against the full PCORnet CDM required-NOT-NULL field set.
 -- Parameters: {{ current_schema }}
-WITH nulls AS (
-    SELECT COUNT(*) AS N FROM {{ current_schema }}.DEMOGRAPHIC WHERE PATID IS NULL UNION ALL
-    SELECT COUNT(*) FROM {{ current_schema }}.ENCOUNTER WHERE ENCOUNTERID IS NULL UNION ALL
-    SELECT COUNT(*) FROM {{ current_schema }}.ENCOUNTER WHERE PATID IS NULL UNION ALL
-    SELECT COUNT(*) FROM {{ current_schema }}.ENCOUNTER WHERE ADMIT_DATE IS NULL UNION ALL
-    SELECT COUNT(*) FROM {{ current_schema }}.ENCOUNTER WHERE ENC_TYPE IS NULL UNION ALL
-    SELECT COUNT(*) FROM {{ current_schema }}.DIAGNOSIS WHERE DIAGNOSISID IS NULL UNION ALL
-    SELECT COUNT(*) FROM {{ current_schema }}.DIAGNOSIS WHERE PATID IS NULL UNION ALL
-    SELECT COUNT(*) FROM {{ current_schema }}.PROCEDURES WHERE PROCEDURESID IS NULL UNION ALL
-    SELECT COUNT(*) FROM {{ current_schema }}.PROCEDURES WHERE PATID IS NULL
-),
-total AS (SELECT SUM(N) AS TOTAL_NULLS FROM nulls)
+WITH all_missing AS (
+{% set required_fields = [
+    ('DEMOGRAPHIC', 'PATID'),
+    ('DEMOGRAPHIC', 'BIRTH_DATE'),
+    ('DEMOGRAPHIC', 'SEX'),
+    ('DEMOGRAPHIC', 'HISPANIC'),
+    ('DEMOGRAPHIC', 'RACE'),
+    ('ENROLLMENT', 'PATID'),
+    ('ENROLLMENT', 'ENR_START_DATE'),
+    ('ENROLLMENT', 'ENR_BASIS'),
+    ('ENCOUNTER', 'ENCOUNTERID'),
+    ('ENCOUNTER', 'PATID'),
+    ('ENCOUNTER', 'ADMIT_DATE'),
+    ('ENCOUNTER', 'ENC_TYPE'),
+    ('DIAGNOSIS', 'DIAGNOSISID'),
+    ('DIAGNOSIS', 'PATID'),
+    ('DIAGNOSIS', 'ENCOUNTERID'),
+    ('DIAGNOSIS', 'DX'),
+    ('DIAGNOSIS', 'DX_TYPE'),
+    ('PROCEDURES', 'PROCEDURESID'),
+    ('PROCEDURES', 'PATID'),
+    ('PROCEDURES', 'ENCOUNTERID'),
+    ('PROCEDURES', 'PX'),
+    ('PROCEDURES', 'PX_TYPE'),
+    ('VITAL', 'VITALID'),
+    ('VITAL', 'PATID'),
+    ('VITAL', 'MEASURE_DATE'),
+    ('VITAL', 'VITAL_SOURCE'),
+    ('DEATH', 'PATID'),
+    ('DEATH', 'DEATH_SOURCE'),
+    ('DEATH_CAUSE', 'PATID'),
+    ('DEATH_CAUSE', 'DEATH_CAUSE'),
+    ('DEATH_CAUSE', 'DEATH_CAUSE_CODE'),
+    ('DEATH_CAUSE', 'DEATH_CAUSE_TYPE'),
+    ('DEATH_CAUSE', 'DEATH_CAUSE_SOURCE'),
+    ('CONDITION', 'CONDITIONID'),
+    ('CONDITION', 'PATID'),
+    ('CONDITION', 'CONDITION'),
+    ('CONDITION', 'CONDITION_SOURCE'),
+    ('PRO_CM', 'PRO_CM_ID'),
+    ('PRO_CM', 'PATID'),
+    ('DISPENSING', 'DISPENSINGID'),
+    ('DISPENSING', 'PATID'),
+    ('DISPENSING', 'DISPENSE_DATE'),
+    ('DISPENSING', 'NDC'),
+    ('PRESCRIBING', 'PRESCRIBINGID'),
+    ('PRESCRIBING', 'PATID'),
+    ('PRESCRIBING', 'RXNORM_CUI'),
+    ('MED_ADMIN', 'MEDADMINID'),
+    ('MED_ADMIN', 'PATID'),
+    ('MED_ADMIN', 'ENCOUNTERID'),
+    ('LAB_RESULT_CM', 'LAB_RESULT_CM_ID'),
+    ('LAB_RESULT_CM', 'PATID'),
+    ('OBS_CLIN', 'OBSCLINID'),
+    ('OBS_CLIN', 'PATID'),
+    ('OBS_GEN', 'OBSGENID'),
+    ('OBS_GEN', 'PATID'),
+    ('IMMUNIZATION', 'IMMUNIZATIONID'),
+    ('IMMUNIZATION', 'PATID'),
+    ('IMMUNIZATION', 'VX_CODE'),
+    ('IMMUNIZATION', 'VX_CODE_TYPE'),
+    ('LAB_HISTORY', 'LABHISTORYID'),
+    ('HASH_TOKEN', 'PATID'),
+    ('HASH_TOKEN', 'TOKEN_ENCRYPTION_KEY'),
+    ('LDS_ADDRESS_HISTORY', 'ADDRESSID'),
+    ('LDS_ADDRESS_HISTORY', 'PATID'),
+    ('PCORNET_TRIAL', 'PATID'),
+    ('PCORNET_TRIAL', 'TRIALID'),
+    ('PCORNET_TRIAL', 'PARTICIPANTID'),
+    ('PROVIDER', 'PROVIDERID'),
+    ('EXTERNAL_MEDS', 'PATID'),
+    ('EXTERNAL_MEDS', 'EXTMEDID'),
+    ('PAT_RELATIONSHIP', 'PATID_1'),
+    ('PAT_RELATIONSHIP', 'PATID_2'),
+    ('PAT_RELATIONSHIP', 'RELATIONSHIP_TYPE'),
+    ('HARVEST', 'NETWORKID'),
+    ('HARVEST', 'DATAMARTID'),
+] %}
+{% for tbl, fld in required_fields %}
+    {% if not loop.first %}UNION ALL {% endif %}SELECT SUM(CASE WHEN {{ fld }} IS NULL OR TRIM({{ fld }}::STRING) = '' THEN 1 ELSE 0 END) AS N
+    FROM {{ current_schema }}.{{ tbl }}
+{% endfor %}
+)
 SELECT
-    '1.07'                                              AS CHECK_NUM,
+    '1.07'                                                AS CHECK_NUM,
     'Required fields have non-permissible missing values' AS DESCRIPTION,
-    CASE WHEN TOTAL_NULLS > 0 THEN 'Fail' ELSE 'Pass' END AS STATUS
-FROM total
+    CASE WHEN COALESCE(SUM(N), 0) > 0 THEN 'Fail' ELSE 'Pass' END AS STATUS
+FROM all_missing

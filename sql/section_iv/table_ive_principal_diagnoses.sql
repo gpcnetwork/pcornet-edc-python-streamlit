@@ -50,8 +50,8 @@ joined AS (
     LEFT JOIN principal p ON p.ENC_TYPE=s.ENC_TYPE AND p.DX_ORIGIN=s.DX_ORIGIN
 )
 SELECT
-    CASE j.ENC_TYPE WHEN 'EI' THEN 'EI (ED to IP Stay)' WHEN 'IP' THEN 'IP (Inpatient)'
-        WHEN 'IS' THEN 'IS (Non-acute Institutional)' WHEN 'OS' THEN 'OS (Observation Stay)' ELSE j.ENC_TYPE END AS ENCOUNTER_TYPE,
+    CASE j.ENC_TYPE WHEN 'EI' THEN 'EI (ED to IP Stay)' WHEN 'IP' THEN 'IP (Inpatient Hospital Stay)'
+        WHEN 'IS' THEN 'IS (Non-acute Institutional Stay)' WHEN 'OS' THEN 'OS (Observation Stay)' ELSE j.ENC_TYPE END AS ENCOUNTER_TYPE,
     CASE j.DX_ORIGIN WHEN 'BI' THEN 'BI (billing)' WHEN 'CL' THEN 'CL (claim)'
         WHEN 'DR' THEN 'DR (derived)' WHEN 'OD' THEN 'OD (Order/EHR)' ELSE j.DX_ORIGIN END AS DX_ORIGIN,
     j.ENCOUNTERS_WITH_P    AS ENCOUNTERS_WITH_PRINCIPAL_DX,

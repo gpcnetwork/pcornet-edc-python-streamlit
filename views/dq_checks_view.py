@@ -336,13 +336,28 @@ def render_dq_checks_view(session, schema: str, cutoff_date,
             if result is None:
                 st.caption("Result not stored — click Run to re-execute.")
             else:
-                label = f"Results ({len(result)} rows)" if result else "Results (0 rows)"
-                with st.expander(label, expanded=bool(result)):
-                    if result:
-                        dicts = result if isinstance(result[0], dict) else \
-                                [{col: getattr(r, col) for col in r._fields} for r in result]
-                        st.dataframe(pd.DataFrame(dicts), width="stretch", hide_index=True)
+                if result:
+                    dicts = result if isinstance(result[0], dict) else \
+                            [{col: getattr(r, col) for col in r._fields} for r in result]
+                    detail_dicts = [d for d in dicts if str(d.get("ROW_TYPE", "")).upper() == "DETAIL"]
+                    has_detail_schema = "ROW_TYPE" in dicts[0]
+                    if has_detail_schema:
+                        label = f"Exceptions ({len(detail_dicts)})"
+                        with st.expander(label, expanded=bool(detail_dicts)):
+                            if detail_dicts:
+                                detail_df = pd.DataFrame(detail_dicts)[
+                                    [c for c in ("EXC_TABLE", "EXC_FIELD", "EXC_DETAIL", "EXC_COUNT")
+                                     if c in detail_dicts[0]]
+                                ]
+                                st.dataframe(detail_df, width="stretch", hide_index=True)
+                            else:
+                                st.info("No exceptions — check passed.")
                     else:
+                        label = f"Results ({len(result)} rows)"
+                        with st.expander(label, expanded=True):
+                            st.dataframe(pd.DataFrame(dicts), width="stretch", hide_index=True)
+                else:
+                    with st.expander("Results (0 rows)", expanded=False):
                         st.info("No records returned.")
 
         st.divider()

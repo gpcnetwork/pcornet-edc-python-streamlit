@@ -6,7 +6,7 @@ import streamlit as st
 
 from utils.db import get_meta_conn
 from utils.run_repository import RunRepository
-from utils.sql_loader import load_sql
+from utils.sql_loader import load_sql, _REF_SCHEMA, _REQUIRED_STRUCTURE_FQN
 from utils.table_renderer import TableRenderer
 
 
@@ -24,7 +24,7 @@ def _to_date(d) -> datetime.date | None:
 @st.cache_data
 def load_sections() -> pd.DataFrame:
     base = Path(__file__).parent.parent
-    return pd.read_csv(base / "dq-analysis" / "section.csv", sep="|")
+    return pd.read_csv(base / "resources" / "dq-analysis" / "section.csv", sep="|")
 
 
 def run_section_item(
@@ -53,8 +53,9 @@ def run_section_item(
             filter_date=str(start_dt),
             year_1=str(year_1_dt),
             report_month=str(report_month),
-            loinc_ref_fqn="",
-            rx_ref_cte="SELECT NULL::VARCHAR AS rxcui_str, NULL::VARCHAR AS tier_norm WHERE 1=0",
+            loinc_ref_fqn=f"{_REF_SCHEMA}.LOINC",
+            rxnorm_ref_fqn=f"{_REF_SCHEMA}.RXNORM_CUI_REF",
+            required_structure_fqn=_REQUIRED_STRUCTURE_FQN,
         )
         records = RunRepository(get_meta_conn()).run_sql_with_meta(
             session, sql, query_name, run_id, network_id, site_id
