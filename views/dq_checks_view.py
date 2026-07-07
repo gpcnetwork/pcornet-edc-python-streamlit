@@ -353,10 +353,18 @@ def render_dq_checks_view(session, schema: str, cutoff_date,
                         label = f"Exceptions ({len(detail_dicts)})"
                         with st.expander(label, expanded=bool(detail_dicts)):
                             if detail_dicts:
-                                detail_df = pd.DataFrame(detail_dicts)[
-                                    [c for c in ("EXC_TABLE", "EXC_FIELD", "EXC_DETAIL", "EXC_COUNT")
-                                     if c in detail_dicts[0]]
-                                ]
+                                cols = [c for c in ("EXC_TABLE", "EXC_FIELD", "EXC_DETAIL", "EXC_COUNT")
+                                        if c in detail_dicts[0]]
+                                detail_df = pd.DataFrame(detail_dicts)[cols]
+                                # Hide columns that are empty for this check
+                                # (e.g. Field/Count for the missing-table checks).
+                                detail_df = detail_df.replace("", pd.NA).dropna(axis=1, how="all")
+                                detail_df = detail_df.rename(columns={
+                                    "EXC_TABLE": "Table",
+                                    "EXC_FIELD": "Field",
+                                    "EXC_DETAIL": "Issue",
+                                    "EXC_COUNT": "Count",
+                                })
                                 st.dataframe(detail_df, width="stretch", hide_index=True)
                             else:
                                 st.info("No exceptions — check passed.")

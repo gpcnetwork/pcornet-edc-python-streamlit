@@ -61,8 +61,7 @@ class RunRepository:
         return self._fetch(f"""
             SELECT
                 COALESCE(r.SESSION_ID, r.RUN_ID)                                    AS SESSION_ID,
-                r.CDM_SCHEMA, r.CUTOFF_DATE,
-                MAX(r.LOOKBACK_YEARS)                                                AS LOOKBACK_YEARS,
+                r.CDM_SCHEMA, r.CUTOFF_DATE, r.LOOKBACK_YEARS,
                 MAX(r.PREV_SCHEMA)                                                   AS PREV_SCHEMA,
                 MIN(r.STARTED_AT)                                                    AS STARTED_AT,
                 CASE WHEN SUM(CASE WHEN r.STATUS != 'COMPLETE' THEN 1 ELSE 0 END) > 0
@@ -99,7 +98,7 @@ class RunRepository:
                 GROUP BY RUN_ID
             ) c ON c.RUN_ID = r.RUN_ID
             WHERE r.SITE_ID = ?
-            GROUP BY COALESCE(r.SESSION_ID, r.RUN_ID), r.CDM_SCHEMA, r.CUTOFF_DATE
+            GROUP BY COALESCE(r.SESSION_ID, r.RUN_ID), r.CDM_SCHEMA, r.CUTOFF_DATE, r.LOOKBACK_YEARS
             ORDER BY MIN(r.STARTED_AT) DESC
             LIMIT 50
         """, [site_id])

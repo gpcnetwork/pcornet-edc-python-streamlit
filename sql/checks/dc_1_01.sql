@@ -41,7 +41,7 @@ details AS (
         'DETAIL'                            AS ROW_TYPE,
         m.TABLE_NAME                        AS EXC_TABLE,
         CAST(NULL AS VARCHAR)               AS EXC_FIELD,
-        'Missing table'                     AS EXC_DETAIL,
+        'Required table does not exist'     AS EXC_DETAIL,
         CAST(NULL AS NUMBER)                AS EXC_COUNT,
         ROW_NUMBER() OVER (ORDER BY m.TABLE_NAME) AS ROW_ORDER
     FROM missing m
