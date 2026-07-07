@@ -403,7 +403,6 @@ def _render_table_ive(records: list) -> None:
             "DX_ORIGIN",
             "ENCOUNTERS_WITH_PRINCIPAL_DX", "ENCOUNTERS_WITHOUT_PRINCIPAL_DX",
             "PCT_WITHOUT_PRINCIPAL_DX", "TOTAL_PRINCIPAL_DX", "AVG_PRINCIPAL_DX_PER_ENC",
-            "SOURCE_TABLE",
         ]].copy()
         display.columns = [
             "DX_ORIGIN",
@@ -412,7 +411,6 @@ def _render_table_ive(records: list) -> None:
             "% without a principal diagnosis",
             "Principal diagnoses",
             "Principal diagnoses per encounter",
-            "Source Table",
         ]
 
         is_inst = str(enc_type)[:2] in _IVE_INST_ENC_TYPES
