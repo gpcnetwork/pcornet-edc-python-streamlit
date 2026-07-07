@@ -31,7 +31,12 @@ _sf_init_lock    = threading.Lock()
 
 
 def _ensure_sf_tables(session) -> None:
-    """Create DQ metadata tables in Snowflake if they don't exist (once per process)."""
+    """Create DQ metadata tables in Snowflake if they don't exist (once per process).
+
+    Statements are idempotent (CREATE TABLE IF NOT EXISTS). A single statement
+    failing (e.g. a redundant migration) should not crash the whole app, so each
+    is run independently and errors are logged and skipped rather than raised.
+    """
     global _sf_tables_ready
     if _sf_tables_ready:
         return
@@ -39,7 +44,10 @@ def _ensure_sf_tables(session) -> None:
         if not _sf_tables_ready:
             ddl = (Path(__file__).parent.parent / "sql" / "init_snowflake.sql").read_text()
             for stmt in [s.strip() for s in ddl.split(";") if s.strip()]:
-                session.sql(stmt).collect()
+                try:
+                    session.sql(stmt).collect()
+                except Exception as exc:
+                    st.warning(f"Skipped metadata DDL statement: {exc}")
             _sf_tables_ready = True
 
 
