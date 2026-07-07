@@ -47,7 +47,7 @@ condition_rows AS (
             FROM {{ current_schema }}.CONDITION
             WHERE CONDITION IS NOT NULL
               AND CONDITION_TYPE IN ('09', '10')
-              AND REPORT_DATE >= TO_DATE('{{ start_date }}')
+              AND REPORT_DATE >= TO_DATE('{{ start_date }}') AND REPORT_DATE <= TO_DATE('{{ end_date }}')
         )
     )
     GROUP BY code_type
@@ -85,7 +85,7 @@ diagnosis_rows AS (
             FROM {{ current_schema }}.DIAGNOSIS
             WHERE DX IS NOT NULL
               AND DX_TYPE IN ('09', '10')
-              AND ADMIT_DATE >= TO_DATE('{{ start_date }}')
+              AND ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
         )
     )
     GROUP BY code_type
@@ -110,7 +110,7 @@ dispensing_rows AS (
                    LENGTH(UPPER(REGEXP_REPLACE(NDC, '[., ]', ''))) AS code_length
             FROM {{ current_schema }}.DISPENSING
             WHERE NDC IS NOT NULL
-              AND DISPENSE_DATE >= TO_DATE('{{ start_date }}')
+              AND DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND DISPENSE_DATE <= TO_DATE('{{ end_date }}')
         )
     )
 ),
@@ -133,7 +133,7 @@ external_meds_rows AS (
                    LENGTH(UPPER(REGEXP_REPLACE(RXNORM_CUI, '[., ]', ''))) AS code_length
             FROM {{ current_schema }}.EXTERNAL_MEDS
             WHERE RXNORM_CUI IS NOT NULL
-              AND EXT_RECORD_DATE >= TO_DATE('{{ start_date }}')
+              AND EXT_RECORD_DATE >= TO_DATE('{{ start_date }}') AND EXT_RECORD_DATE <= TO_DATE('{{ end_date }}')
         )
     )
 ),
@@ -181,7 +181,7 @@ immunization_rows AS (
             FROM {{ current_schema }}.IMMUNIZATION
             WHERE VX_CODE IS NOT NULL
               AND VX_CODE_TYPE IN ('CX', 'ND', 'RX', 'CH')
-              AND VX_ADMIN_DATE >= TO_DATE('{{ start_date }}')
+              AND VX_ADMIN_DATE >= TO_DATE('{{ start_date }}') AND VX_ADMIN_DATE <= TO_DATE('{{ end_date }}')
         )
     )
     GROUP BY code_type
@@ -232,7 +232,7 @@ lab_result_cm_rows AS (
             FROM {{ current_schema }}.LAB_RESULT_CM l
             LEFT JOIN loinc_class lc ON TRIM(UPPER(l.LAB_LOINC)) = lc.LOINC_NUM
             WHERE l.LAB_LOINC IS NOT NULL
-              AND l.RESULT_DATE >= TO_DATE('{{ start_date }}')
+              AND l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND l.RESULT_DATE <= TO_DATE('{{ end_date }}')
         )
     )
 ),
@@ -265,7 +265,7 @@ med_admin_rows AS (
             FROM {{ current_schema }}.MED_ADMIN
             WHERE MEDADMIN_CODE IS NOT NULL
               AND MEDADMIN_TYPE IN ('RX', 'ND')
-              AND MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}')
+              AND MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND MEDADMIN_START_DATE <= TO_DATE('{{ end_date }}')
         )
     )
     GROUP BY code_type
@@ -294,7 +294,7 @@ obs_clin_rows AS (
             LEFT JOIN loinc_class lc ON TRIM(UPPER(o.OBSCLIN_CODE)) = lc.LOINC_NUM
             WHERE o.OBSCLIN_CODE IS NOT NULL
               AND o.OBSCLIN_TYPE = 'LC'
-              AND o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}')
+              AND o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND o.OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}')
         )
     )
 ),
@@ -361,7 +361,7 @@ obs_gen_rows AS (
             FROM {{ current_schema }}.OBS_GEN
             WHERE OBSGEN_CODE IS NOT NULL
               AND OBSGEN_TYPE IN ('LC', 'ND', 'RX', '09DX', '09PX', '10DX', '10PX', 'CH')
-              AND OBSGEN_START_DATE >= TO_DATE('{{ start_date }}')
+              AND OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSGEN_START_DATE <= TO_DATE('{{ end_date }}')
         )
     )
     GROUP BY code_type
@@ -385,7 +385,7 @@ prescribing_rows AS (
                    LENGTH(UPPER(REGEXP_REPLACE(RXNORM_CUI::VARCHAR, '[., ]', ''))) AS code_length
             FROM {{ current_schema }}.PRESCRIBING
             WHERE RXNORM_CUI IS NOT NULL
-              AND RX_ORDER_DATE >= TO_DATE('{{ start_date }}')
+              AND RX_ORDER_DATE >= TO_DATE('{{ start_date }}') AND RX_ORDER_DATE <= TO_DATE('{{ end_date }}')
         )
     )
 ),
@@ -410,7 +410,7 @@ pro_cm_rows AS (
             FROM {{ current_schema }}.PRO_CM
             WHERE PRO_CODE IS NOT NULL
               AND UPPER(TRIM(PRO_TYPE)) = 'LC'
-              AND PRO_DATE >= TO_DATE('{{ start_date }}')
+              AND PRO_DATE >= TO_DATE('{{ start_date }}') AND PRO_DATE <= TO_DATE('{{ end_date }}')
         )
     )
 ),
@@ -459,7 +459,7 @@ procedures_rows AS (
             FROM {{ current_schema }}.PROCEDURES
             WHERE PX IS NOT NULL
               AND PX_TYPE IN ('CH', '09', '10', 'ND')
-              AND PX_DATE >= TO_DATE('{{ start_date }}')
+              AND PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}')
         )
     )
     GROUP BY code_type

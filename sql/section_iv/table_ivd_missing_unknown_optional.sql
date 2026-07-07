@@ -15,7 +15,7 @@ WITH cond AS (
         SUM(CASE WHEN REPORT_DATE      IS NULL                                         THEN 1 ELSE 0 END)                       AS report_date,
         SUM(CASE WHEN RESOLVE_DATE     IS NULL                                         THEN 1 ELSE 0 END)                       AS resolve_date
     FROM {{ current_schema }}.CONDITION
-    WHERE REPORT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE REPORT_DATE >= TO_DATE('{{ start_date }}') AND REPORT_DATE <= TO_DATE('{{ end_date }}')
 ),
 dth AS (
     SELECT
@@ -46,7 +46,7 @@ disp AS (
         SUM(CASE WHEN DISPENSE_SUP           IS NULL                                         THEN 1 ELSE 0 END)                 AS dispense_sup,
         SUM(CASE WHEN PRESCRIBINGID          IS NULL                                         THEN 1 ELSE 0 END)                 AS prescribingid
     FROM {{ current_schema }}.DISPENSING
-    WHERE DISPENSE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND DISPENSE_DATE <= TO_DATE('{{ end_date }}')
 ),
 extmed AS (
     SELECT
@@ -59,7 +59,7 @@ extmed AS (
         SUM(CASE WHEN EXT_ROUTE              IS NULL OR EXT_ROUTE              IN ('NI','UN','OT') THEN 1 ELSE 0 END)           AS ext_route,
         SUM(CASE WHEN RXNORM_CUI             IS NULL                                         THEN 1 ELSE 0 END)                 AS rxnorm_cui
     FROM {{ current_schema }}.EXTERNAL_MEDS
-    WHERE EXT_RECORD_DATE >= TO_DATE('{{ start_date }}')
+    WHERE EXT_RECORD_DATE >= TO_DATE('{{ start_date }}') AND EXT_RECORD_DATE <= TO_DATE('{{ end_date }}')
 ),
 imm AS (
     SELECT
@@ -81,7 +81,7 @@ imm AS (
         SUM(CASE WHEN VX_STATUS       IS NULL OR VX_STATUS       IN ('NI','UN','OT')  THEN 1 ELSE 0 END)                       AS vx_status,
         SUM(CASE WHEN VX_STATUS_REASON IS NULL OR VX_STATUS_REASON IN ('NI','UN','OT') THEN 1 ELSE 0 END)                      AS vx_status_reason
     FROM {{ current_schema }}.IMMUNIZATION
-    WHERE VX_ADMIN_DATE >= TO_DATE('{{ start_date }}')
+    WHERE VX_ADMIN_DATE >= TO_DATE('{{ start_date }}') AND VX_ADMIN_DATE <= TO_DATE('{{ end_date }}')
 ),
 labhist AS (
     SELECT
@@ -123,7 +123,7 @@ lab AS (
         SUM(CASE WHEN SPECIMEN_SOURCE    IS NULL OR SPECIMEN_SOURCE    IN ('NI','UN','OT') THEN 1 ELSE 0 END)                   AS specimen_source,
         SUM(CASE WHEN SPECIMEN_TIME      IS NULL                                         THEN 1 ELSE 0 END)                     AS specimen_time
     FROM {{ current_schema }}.LAB_RESULT_CM
-    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}') AND RESULT_DATE <= TO_DATE('{{ end_date }}')
 ),
 ldsadrs AS (
     SELECT
@@ -159,7 +159,7 @@ medadm AS (
         SUM(CASE WHEN MEDADMIN_TYPE         IS NULL OR MEDADMIN_TYPE         IN ('NI','UN','OT') THEN 1 ELSE 0 END)             AS medadmin_type,
         SUM(CASE WHEN PRESCRIBINGID         IS NULL                                         THEN 1 ELSE 0 END)                  AS prescribingid
     FROM {{ current_schema }}.MED_ADMIN
-    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND MEDADMIN_START_DATE <= TO_DATE('{{ end_date }}')
 ),
 obsclin AS (
     SELECT
@@ -177,7 +177,7 @@ obsclin AS (
         SUM(CASE WHEN OBSCLIN_STOP_TIME      IS NULL                                         THEN 1 ELSE 0 END)                 AS obsclin_stop_time,
         SUM(CASE WHEN OBSCLIN_TYPE           IS NULL OR OBSCLIN_TYPE           IN ('NI','UN','OT') THEN 1 ELSE 0 END)           AS obsclin_type
     FROM {{ current_schema }}.OBS_CLIN
-    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}')
 ),
 obsgen AS (
     SELECT
@@ -195,7 +195,7 @@ obsgen AS (
         SUM(CASE WHEN OBSGEN_STOP_TIME      IS NULL                                         THEN 1 ELSE 0 END)                  AS obsgen_stop_time,
         SUM(CASE WHEN OBSGEN_TYPE           IS NULL OR OBSGEN_TYPE           IN ('NI','UN','OT') THEN 1 ELSE 0 END)             AS obsgen_type
     FROM {{ current_schema }}.OBS_GEN
-    WHERE OBSGEN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSGEN_START_DATE <= TO_DATE('{{ end_date }}')
 ),
 patrel AS (
     SELECT
@@ -227,7 +227,7 @@ pres AS (
         SUM(CASE WHEN RX_SOURCE              IS NULL OR RX_SOURCE              IN ('NI','UN','OT') THEN 1 ELSE 0 END)          AS rx_source,
         SUM(CASE WHEN RX_START_DATE          IS NULL                                         THEN 1 ELSE 0 END)                AS rx_start_date
     FROM {{ current_schema }}.PRESCRIBING
-    WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}') AND RX_ORDER_DATE <= TO_DATE('{{ end_date }}')
 ),
 procm AS (
     SELECT
@@ -243,7 +243,7 @@ procm AS (
         SUM(CASE WHEN PRO_TIME     IS NULL                                         THEN 1 ELSE 0 END)                           AS pro_time,
         SUM(CASE WHEN PRO_TYPE     IS NULL OR PRO_TYPE     IN ('NI','UN','OT')     THEN 1 ELSE 0 END)                           AS pro_type
     FROM {{ current_schema }}.PRO_CM
-    WHERE PRO_DATE >= TO_DATE('{{ start_date }}')
+    WHERE PRO_DATE >= TO_DATE('{{ start_date }}') AND PRO_DATE <= TO_DATE('{{ end_date }}')
 ),
 prov AS (
     SELECT
@@ -261,7 +261,7 @@ vit AS (
         SUM(CASE WHEN MEASURE_TIME IS NULL                                         THEN 1 ELSE 0 END)                           AS measure_time,
         SUM(CASE WHEN VITAL_SOURCE IS NULL OR VITAL_SOURCE IN ('NI','UN','OT')     THEN 1 ELSE 0 END)                           AS vital_source
     FROM {{ current_schema }}.VITAL
-    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
 )
 SELECT TABLE_NAME, FIELD_NAME,
        TO_VARCHAR(NUMERATOR)   AS NUMERATOR,

@@ -16,7 +16,7 @@ WITH all_slices AS (
 filtered AS (
     SELECT ENCOUNTERID, PDX, ENC_TYPE, DX_ORIGIN, ADMIT_DATE::DATE AS ADMIT_DATE
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
       AND ENC_TYPE IN ('EI','IP','IS','OS')
       AND DX_ORIGIN IN ('BI','CL','DR','OD')
 ),

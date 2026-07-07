@@ -13,6 +13,16 @@ _REQUIRED_STRUCTURE_FQN = _os.environ.get(
 _env = Environment()
 _base = Path(__file__).parent.parent
 
+DEFAULT_LOOKBACK_YEARS = 10
+
+
+def _minus_years(d: _dt.date, n: int) -> _dt.date:
+    """Subtract n years, clamping Feb 29 to Feb 28 in non-leap target years."""
+    try:
+        return d.replace(year=d.year - n)
+    except ValueError:  # Feb 29 -> Feb 28
+        return d.replace(month=2, day=28, year=d.year - n)
+
 
 def load_sql(rel_path: str, **params) -> str:
     """Render a SQL template file with Jinja2."""
@@ -32,11 +42,16 @@ class SqlLoader:
     def build_display_params(
         schema: str, db_name: str,
         cutoff_date=None, prev_schema: str = "",
+        lookback_years: int = DEFAULT_LOOKBACK_YEARS,
     ) -> dict:
-        """Build Jinja2 template params for SQL preview rendering."""
+        """Build Jinja2 template params for SQL preview rendering.
+
+        All reports run over one unified window: [ref - lookback_years, ref],
+        where ref = cutoff_date if given, else today().
+        """
         cutoff_str = str(cutoff_date)[:10] if cutoff_date else None
         ref_dt = _dt.date.fromisoformat(cutoff_str) if cutoff_str else _dt.date.today()
-        start_date = str(ref_dt.replace(year=ref_dt.year - 5))
+        start_date = str(_minus_years(ref_dt, lookback_years))
         return dict(
             current_schema=schema,
             db_name=db_name,
@@ -47,7 +62,7 @@ class SqlLoader:
             start_date=start_date,
             end_date=str(ref_dt),
             filter_date=start_date,
-            year_1=str(ref_dt.replace(year=ref_dt.year - 1)),
+            year_1=start_date,
             zip_table="ENCOUNTER",
             zip_column="ZIP",
             loinc_ref_fqn=f"{_REF_SCHEMA}.LOINC",

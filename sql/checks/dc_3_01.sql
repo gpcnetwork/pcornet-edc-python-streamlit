@@ -8,7 +8,7 @@ WITH dx_per_enc AS (
     FROM {{ current_schema }}.ENCOUNTER e
     LEFT JOIN {{ current_schema }}.DIAGNOSIS d ON d.ENCOUNTERID = e.ENCOUNTERID
     WHERE e.ENC_TYPE IN ('AV','IP','ED','EI','TH')
-      AND e.ADMIT_DATE >= TO_DATE('{{ start_date }}')
+      AND e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY e.ENCOUNTERID
 ),
 avg_dx AS (SELECT ROUND(AVG(DX_COUNT), 2) AS AVG_DX FROM dx_per_enc)

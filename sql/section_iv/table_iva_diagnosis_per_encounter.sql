@@ -8,7 +8,7 @@ WITH enc_counts AS (
              ELSE 'Missing/NI/UN/OT' END AS ENC_TYPE_GRP,
         COUNT(*) AS ENC_RECORDS
     FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 dx_counts AS (
@@ -18,7 +18,7 @@ dx_counts AS (
         COUNT(*) AS DX_RECORDS,
         SUM(CASE WHEN DX_TYPE NOT IN ('NI','UN','OT') THEN 1 ELSE 0 END) AS DX_RECORDS_KNOWN_DXTYPE
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 all_types AS (

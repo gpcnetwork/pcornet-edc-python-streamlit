@@ -1,4 +1,3 @@
-import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -7,7 +6,11 @@ import streamlit as st
 from utils.constants import DQ_RESULTS_TABLE
 from utils.db import get_meta_conn
 from utils.run_repository import RunRepository
-from utils.sql_loader import load_sql, _REF_SCHEMA, _REQUIRED_STRUCTURE_FQN
+from utils.sql_loader import (
+    load_sql,
+    SqlLoader,
+    DEFAULT_LOOKBACK_YEARS,
+)
 from utils.table_renderer import TableRenderer
 
 
@@ -17,49 +20,19 @@ def load_dq_checks() -> pd.DataFrame:
     return pd.read_csv(base / "resources" / "dq-analysis" / "dq_checks.csv", sep="|")
 
 
-def _fmt_date(d) -> str | None:
-    if d is None:
-        return None
-    if isinstance(d, datetime.date):
-        return str(d)
-    try:
-        return str(datetime.date.fromisoformat(str(d)[:10]))
-    except (ValueError, TypeError):
-        return None
-
-
 def run_single_check(
     session, check_row: pd.Series, schema: str, db_name: str,
     run_id: str, network_id: str = "", site_id: str = "",
     cutoff_date=None, prev_schema: str | None = None,
+    lookback_years: int = DEFAULT_LOOKBACK_YEARS,
 ) -> tuple[bool, list | str]:
     sql_file = str(check_row.get("SQL_File_Ref", "")).strip()
     check_id = f"{check_row['Data Check']}|{check_row['EDC Table']}"
     try:
-        cutoff_str = _fmt_date(cutoff_date)
-        ref_dt = (
-            datetime.date.fromisoformat(cutoff_str)
-            if cutoff_str else datetime.date.today()
+        params = SqlLoader.build_display_params(
+            schema, db_name, cutoff_date, prev_schema or "", lookback_years,
         )
-        start_dt = ref_dt.replace(year=ref_dt.year - 5)
-        year_1_dt = ref_dt.replace(year=ref_dt.year - 1)
-        last_schema = prev_schema or ""
-        sql = load_sql(
-            sql_file,
-            current_schema=schema,
-            db_name=db_name,
-            cutoff_date=cutoff_str,
-            prev_schema=last_schema,
-            last_schema=last_schema,
-            start_date=str(start_dt),
-            end_date=str(ref_dt),
-            filter_date=str(start_dt),
-            year_1=str(year_1_dt),
-            report_month=str(ref_dt.replace(day=1)),
-            loinc_ref_fqn=f"{_REF_SCHEMA}.LOINC",
-            rxnorm_ref_fqn=f"{_REF_SCHEMA}.RXNORM_CUI_REF",
-            required_structure_fqn=_REQUIRED_STRUCTURE_FQN,
-        )
+        sql = load_sql(sql_file, **params)
         records = RunRepository(get_meta_conn()).run_sql_with_meta(
             session, sql, check_id, run_id, network_id, site_id
         )

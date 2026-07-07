@@ -4,15 +4,15 @@
 
 WITH enc_total AS (
     SELECT COUNT(*) AS n FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 dx_total AS (
     SELECT COUNT(*) AS n FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 px_total AS (
     SELECT COUNT(*) AS n FROM {{ current_schema }}.PROCEDURES
-    WHERE PX_DATE >= TO_DATE('{{ start_date }}')
+    WHERE PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}')
 ),
 enc_by_type AS (
     SELECT
@@ -20,7 +20,7 @@ enc_by_type AS (
              ELSE 'Missing/NI/UN/OT' END AS ENC_TYPE_GRP,
         COUNT(*) AS ENC_N
     FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 dx_by_type AS (
@@ -29,7 +29,7 @@ dx_by_type AS (
              ELSE 'Missing/NI/UN/OT' END AS ENC_TYPE_GRP,
         COUNT(*) AS DX_N
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 px_by_type AS (
@@ -38,7 +38,7 @@ px_by_type AS (
              ELSE 'Missing/NI/UN/OT' END AS ENC_TYPE_GRP,
         COUNT(*) AS PX_N
     FROM {{ current_schema }}.PROCEDURES
-    WHERE PX_DATE >= TO_DATE('{{ start_date }}')
+    WHERE PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 all_types AS (

@@ -8,15 +8,15 @@ WITH f2f_pats AS (
     SELECT DISTINCT PATID
     FROM {{ current_schema }}.ENCOUNTER
     WHERE ENC_TYPE IN ('AV','ED','EI','IP','OS')
-      AND ADMIT_DATE >= TO_DATE('{{ start_date }}')
+      AND ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 with_dx AS (
     SELECT DISTINCT PATID FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 with_vital AS (
     SELECT DISTINCT PATID FROM {{ current_schema }}.VITAL
-    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
 ),
 counts AS (
     SELECT

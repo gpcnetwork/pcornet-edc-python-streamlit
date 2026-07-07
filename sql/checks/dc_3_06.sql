@@ -5,16 +5,16 @@
 WITH ip_ei_enc AS (
     SELECT ENCOUNTERID FROM {{ current_schema }}.ENCOUNTER
     WHERE ENC_TYPE IN ('IP','EI')
-      AND ADMIT_DATE >= TO_DATE('{{ start_date }}')
+      AND ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 with_any_dx AS (
     SELECT DISTINCT ENCOUNTERID FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
       AND DX_ORIGIN NOT IN ('NI','UN','OT') AND DX_ORIGIN IS NOT NULL
 ),
 with_principal AS (
     SELECT DISTINCT ENCOUNTERID FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
       AND PDX = 'P'
       AND DX_ORIGIN NOT IN ('NI','UN','OT') AND DX_ORIGIN IS NOT NULL
 ),

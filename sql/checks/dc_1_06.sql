@@ -44,7 +44,7 @@ WITH violations AS (
           FROM PCORNET_CDM.PCORNET_DC_REF.VALUESETS
           WHERE TABLE_NAME = '{{ tbl }}' AND FIELD_NAME = '{{ fld }}'
       )
-      {% if date_col %}AND {{ date_col }} >= TO_DATE('{{ start_date }}'){% endif %}
+      {% if date_col %}AND {{ date_col }} >= TO_DATE('{{ start_date }}') AND {{ date_col }} <= TO_DATE('{{ end_date }}'){% endif %}
     HAVING COUNT(*) > 0
 {% endfor %}
 ),

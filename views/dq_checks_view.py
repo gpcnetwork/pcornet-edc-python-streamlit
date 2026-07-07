@@ -77,11 +77,13 @@ def _row_key(row) -> str:
 
 def _ensure_run_id(session, schema: str, cutoff_date, network_id: str, site_id: str,
                    session_id: str | None = None,
-                   prev_schema: str | None = None) -> str:
+                   prev_schema: str | None = None,
+                   lookback_years: int = 10) -> str:
     if not st.session_state.get("dq_run_id"):
         run_id = RunRepository(get_meta_conn()).begin_run(
             network_id, site_id, schema, cutoff_date=cutoff_date,
-            triggered_by="dq_checks", session_id=session_id, prev_schema=prev_schema
+            triggered_by="dq_checks", session_id=session_id, prev_schema=prev_schema,
+            lookback_years=lookback_years,
         )
         st.session_state["dq_run_id"] = run_id
     return st.session_state["dq_run_id"]
@@ -89,7 +91,8 @@ def _ensure_run_id(session, schema: str, cutoff_date, network_id: str, site_id: 
 
 def render_dq_checks_view(session, schema: str, cutoff_date,
                            prev_schema: str | None = None,
-                           session_id: str | None = None):
+                           session_id: str | None = None,
+                           lookback_years: int = 10):
     active = st.session_state.get("active_site", {})
     network_id = active.get("network_id", "")
     site_id = active.get("site_id", "")
@@ -220,7 +223,8 @@ def render_dq_checks_view(session, schema: str, cutoff_date,
     )
 
     def _run_checks(rows):
-        run_id = _ensure_run_id(session, schema, cutoff_date, network_id, site_id, session_id, prev_schema)
+        run_id = _ensure_run_id(session, schema, cutoff_date, network_id, site_id,
+                                session_id, prev_schema, lookback_years)
         progress = st.progress(0, text="Running checks…")
         total = len(rows)
         for i, (_, row) in enumerate(rows.iterrows()):
@@ -229,6 +233,7 @@ def render_dq_checks_view(session, schema: str, cutoff_date,
             success, result = run_single_check(
                 session, row, schema, db_name, run_id, network_id, site_id,
                 cutoff_date=cutoff_date, prev_schema=prev_schema,
+                lookback_years=lookback_years,
             )
             st.session_state["dq_durations"][rk] = int((time.perf_counter() - t0) * 1000)
             st.session_state["dq_results"][rk] = result
@@ -261,7 +266,8 @@ def render_dq_checks_view(session, schema: str, cutoff_date,
     page_df = filtered_df.iloc[page * _PAGE_SIZE:(page + 1) * _PAGE_SIZE]
 
     check_to_sections = _build_check_to_sections()
-    sql_params = SqlLoader.build_display_params(schema, db_name, cutoff_date, prev_schema or "")
+    sql_params = SqlLoader.build_display_params(schema, db_name, cutoff_date,
+                                                prev_schema or "", lookback_years)
 
     # ── Paged check list ───────────────────────────────────────────────────────
     for _, row in page_df.iterrows():
@@ -293,11 +299,13 @@ def render_dq_checks_view(session, schema: str, cutoff_date,
         with btn_col:
             if has_sql and st.button("Re-Run" if status != "pending" else "Run", key=f"dq_run_{safe_rk}"):
                 run_id = _ensure_run_id(session, schema, cutoff_date,
-                                        network_id, site_id, session_id, prev_schema)
+                                        network_id, site_id, session_id, prev_schema,
+                                        lookback_years)
                 t0 = time.perf_counter()
                 success, result = run_single_check(
                     session, row, schema, db_name, run_id, network_id, site_id,
                     cutoff_date=cutoff_date, prev_schema=prev_schema,
+                    lookback_years=lookback_years,
                 )
                 st.session_state["dq_durations"][rk] = int((time.perf_counter() - t0) * 1000)
                 st.session_state["dq_results"][rk] = result

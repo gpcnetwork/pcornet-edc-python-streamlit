@@ -3,11 +3,11 @@
 -- Parameters: {{ current_schema }}, {{ start_date }}
 WITH enc_pats AS (
     SELECT DISTINCT PATID FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 dx_pats AS (
     SELECT DISTINCT PATID FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 counts AS (
     SELECT COUNT(*) AS TOTAL,

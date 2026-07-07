@@ -25,7 +25,7 @@ WITH lab_counts AS (
         SUM(CASE WHEN RESULT_UNIT IS NOT NULL AND RESULT_UNIT NOT IN ('NI','UN','OT')
                  THEN 1 ELSE 0 END)                                                                      AS quant_with_unit
     FROM {{ current_schema }}.LAB_RESULT_CM
-    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}') AND RESULT_DATE <= TO_DATE('{{ end_date }}')
 ),
 obs_counts AS (
     SELECT
@@ -45,7 +45,7 @@ obs_counts AS (
         SUM(CASE WHEN OBSCLIN_RESULT_UNIT IS NOT NULL AND OBSCLIN_RESULT_UNIT NOT IN ('NI','UN','OT')
                  THEN 1 ELSE 0 END)                                                                      AS quant_with_unit
     FROM {{ current_schema }}.OBS_CLIN
-    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}')
 )
 SELECT TABLE_NAME, DATA_CHECK, DESCRIPTION,
        TO_VARCHAR(NUMERATOR)   AS NUMERATOR,

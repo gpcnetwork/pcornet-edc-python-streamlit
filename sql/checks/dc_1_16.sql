@@ -18,7 +18,7 @@ lab_wrong AS (
     FROM {{ current_schema }}.LAB_RESULT_CM l
     JOIN loinc_class lc ON TRIM(UPPER(l.LAB_LOINC)) = lc.LOINC_NUM
     WHERE l.LAB_LOINC IS NOT NULL
-      AND l.RESULT_DATE >= TO_DATE('{{ start_date }}')
+      AND l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND l.RESULT_DATE <= TO_DATE('{{ end_date }}')
       AND lc.CLASSTYPE <> '1'
 ),
 obs_wrong AS (
@@ -27,7 +27,7 @@ obs_wrong AS (
     JOIN loinc_class lc ON TRIM(UPPER(o.OBSCLIN_CODE)) = lc.LOINC_NUM
     WHERE o.OBSCLIN_CODE IS NOT NULL
       AND o.OBSCLIN_TYPE = 'LC'
-      AND o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}')
+      AND o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND o.OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}')
       AND lc.CLASSTYPE = '1'
 ),
 total AS (

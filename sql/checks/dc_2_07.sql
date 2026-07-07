@@ -5,7 +5,7 @@
 WITH principal AS (
     SELECT ENCOUNTERID, COUNT(*) AS PDX_COUNT
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
       AND ENC_TYPE IN ('IP','EI')
       AND PDX = 'P'
       AND DX_ORIGIN NOT IN ('NI','UN','OT')

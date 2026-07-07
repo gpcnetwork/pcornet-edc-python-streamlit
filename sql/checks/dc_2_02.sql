@@ -6,24 +6,24 @@
 WITH height AS (
     SELECT COUNT(*) AS TOTAL, COUNT_IF(HT < 21 OR HT > 76) AS EXTREME
     FROM {{ current_schema }}.VITAL
-    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND HT IS NOT NULL
+    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}') AND HT IS NOT NULL
 ),
 weight AS (
     SELECT COUNT(*) AS TOTAL, COUNT_IF(WT < 0 OR WT > 350) AS EXTREME
     FROM {{ current_schema }}.VITAL
-    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND WT IS NOT NULL
+    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}') AND WT IS NOT NULL
 ),
 bp AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(DIASTOLIC < 40 OR DIASTOLIC > 120 OR SYSTOLIC < 40 OR SYSTOLIC > 210) AS EXTREME
     FROM {{ current_schema }}.VITAL
-    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
       AND (DIASTOLIC IS NOT NULL OR SYSTOLIC IS NOT NULL)
 ),
 supply AS (
     SELECT COUNT(*) AS TOTAL, COUNT_IF(DISPENSE_SUP < 1 OR DISPENSE_SUP > 90) AS EXTREME
     FROM {{ current_schema }}.DISPENSING
-    WHERE DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND DISPENSE_SUP IS NOT NULL
+    WHERE DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND DISPENSE_DATE <= TO_DATE('{{ end_date }}') AND DISPENSE_SUP IS NOT NULL
 ),
 all_checks AS (
     SELECT TOTAL, EXTREME FROM height UNION ALL

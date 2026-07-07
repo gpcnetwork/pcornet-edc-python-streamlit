@@ -42,12 +42,14 @@ def _pagination_bar(page: int, total_pages: int, total_items: int, key_prefix: s
 def _ensure_run_id(slug: str, session, schema: str, cutoff_date,
                    network_id: str, site_id: str,
                    session_id: str | None = None,
-                   prev_schema: str | None = None) -> str:
+                   prev_schema: str | None = None,
+                   lookback_years: int = 10) -> str:
     key = f"{slug}_run_id"
     if not st.session_state.get(key):
         run_id = RunRepository(get_meta_conn()).begin_run(
             network_id, site_id, schema, cutoff_date=cutoff_date,
-            triggered_by=slug, session_id=session_id, prev_schema=prev_schema
+            triggered_by=slug, session_id=session_id, prev_schema=prev_schema,
+            lookback_years=lookback_years,
         )
         st.session_state[key] = run_id
     return st.session_state[key]
@@ -160,7 +162,8 @@ def _render_result(result: list, item_key: str, is_chart: bool, force_expand: bo
 
 def render_section_view(session, section_name: str, items_df: pd.DataFrame,
                         schema: str, cutoff_date, prev_schema: str | None = None,
-                        session_id: str | None = None):
+                        session_id: str | None = None,
+                        lookback_years: int = 10):
     active = st.session_state.get("active_site", {})
     network_id = active.get("network_id", "")
     site_id = active.get("site_id", "")
@@ -267,7 +270,8 @@ def render_section_view(session, section_name: str, items_df: pd.DataFrame,
     )
 
     def _run_items(rows):
-        run_id = _ensure_run_id(slug, session, schema, cutoff_date, network_id, site_id, session_id, prev_schema)
+        run_id = _ensure_run_id(slug, session, schema, cutoff_date, network_id, site_id,
+                                session_id, prev_schema, lookback_years)
         progress = st.progress(0, text="Running…")
         total = len(rows)
         for i, (_, row) in enumerate(rows.iterrows()):
@@ -278,6 +282,7 @@ def render_section_view(session, section_name: str, items_df: pd.DataFrame,
                 run_id, item_key, network_id, site_id,
                 prev_schema=prev_schema,
                 cutoff_date=cutoff_date,
+                lookback_years=lookback_years,
             )
             st.session_state[f"{slug}_durations"][item_key] = int((time.perf_counter() - t0) * 1000)
             st.session_state[f"{slug}_results"][item_key] = result
@@ -337,13 +342,15 @@ def render_section_view(session, section_name: str, items_df: pd.DataFrame,
         with btn_col:
             if has_sql and st.button("Re-Run" if status != "pending" else "Run", key=f"{slug}_{item_key}_run"):
                 run_id = _ensure_run_id(slug, session, schema, cutoff_date,
-                                        network_id, site_id, session_id, prev_schema)
+                                        network_id, site_id, session_id, prev_schema,
+                                        lookback_years)
                 t0 = time.perf_counter()
                 success, result = run_section_item(
                     session, sql_file, schema, db_name,
                     run_id, item_key, network_id, site_id,
                     prev_schema=prev_schema,
                     cutoff_date=cutoff_date,
+                    lookback_years=lookback_years,
                 )
                 st.session_state[f"{slug}_durations"][item_key] = int((time.perf_counter() - t0) * 1000)
                 st.session_state[f"{slug}_results"][item_key] = result
@@ -359,7 +366,8 @@ def render_section_view(session, section_name: str, items_df: pd.DataFrame,
 
         if has_sql and st.session_state.get(f"show_sql_{slug}_{item_key}"):
             try:
-                _sql_params = SqlLoader.build_display_params(schema, db_name, cutoff_date, prev_schema or "")
+                _sql_params = SqlLoader.build_display_params(schema, db_name, cutoff_date,
+                                                             prev_schema or "", lookback_years)
                 st.code(SqlLoader.load_sql(sql_file, **_sql_params), language="sql")
             except Exception:
                 try:

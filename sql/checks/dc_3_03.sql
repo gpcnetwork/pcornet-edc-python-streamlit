@@ -18,99 +18,99 @@ dx_type_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(DX_TYPE IN ('NI','UN','OT') OR DX_TYPE IS NULL) AS BAD
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 dx_origin_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(DX_ORIGIN IN ('NI','UN','OT') OR DX_ORIGIN IS NULL) AS BAD
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 dx_source_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(DX_SOURCE IN ('NI','UN','OT') OR DX_SOURCE IS NULL) AS BAD
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 px_type_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(PX_TYPE IN ('NI','UN','OT') OR PX_TYPE IS NULL) AS BAD
     FROM {{ current_schema }}.PROCEDURES
-    WHERE PX_DATE >= TO_DATE('{{ start_date }}')
+    WHERE PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}')
 ),
 px_source_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(PX_SOURCE IN ('NI','UN','OT') OR PX_SOURCE IS NULL) AS BAD
     FROM {{ current_schema }}.PROCEDURES
-    WHERE PX_DATE >= TO_DATE('{{ start_date }}')
+    WHERE PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}')
 ),
 discharge_disp_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(DISCHARGE_DISPOSITION IN ('NI','UN','OT') OR DISCHARGE_DISPOSITION IS NULL) AS BAD
     FROM {{ current_schema }}.ENCOUNTER
     WHERE ENC_TYPE IN ('IP','EI')
-      AND ADMIT_DATE >= TO_DATE('{{ start_date }}')
+      AND ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 discharge_date_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(DISCHARGE_DATE IS NULL) AS BAD
     FROM {{ current_schema }}.ENCOUNTER
     WHERE ENC_TYPE IN ('IP','EI')
-      AND ADMIT_DATE >= TO_DATE('{{ start_date }}')
+      AND ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 dispense_sup_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(DISPENSE_SUP IS NULL) AS BAD
     FROM {{ current_schema }}.DISPENSING
-    WHERE DISPENSE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND DISPENSE_DATE <= TO_DATE('{{ end_date }}')
 ),
 vital_source_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(VITAL_SOURCE IN ('NI','UN','OT') OR VITAL_SOURCE IS NULL) AS BAD
     FROM {{ current_schema }}.VITAL
-    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
 ),
 rx_source_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(RX_SOURCE IN ('NI','UN','OT') OR RX_SOURCE IS NULL) AS BAD
     FROM {{ current_schema }}.PRESCRIBING
-    WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}') AND RX_ORDER_DATE <= TO_DATE('{{ end_date }}')
 ),
 lab_source_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(LAB_RESULT_SOURCE IN ('NI','UN','OT') OR LAB_RESULT_SOURCE IS NULL) AS BAD
     FROM {{ current_schema }}.LAB_RESULT_CM
-    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}') AND RESULT_DATE <= TO_DATE('{{ end_date }}')
 ),
 medadmin_type_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(MEDADMIN_TYPE IN ('NI','UN','OT') OR MEDADMIN_TYPE IS NULL) AS BAD
     FROM {{ current_schema }}.MED_ADMIN
-    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND MEDADMIN_START_DATE <= TO_DATE('{{ end_date }}')
 ),
 obsclin_type_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(OBSCLIN_TYPE IN ('NI','UN','OT') OR OBSCLIN_TYPE IS NULL) AS BAD
     FROM {{ current_schema }}.OBS_CLIN
-    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}')
 ),
 obsgen_type_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(OBSGEN_TYPE IN ('NI','UN','OT') OR OBSGEN_TYPE IS NULL) AS BAD
     FROM {{ current_schema }}.OBS_GEN
-    WHERE OBSGEN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSGEN_START_DATE <= TO_DATE('{{ end_date }}')
 ),
 condition_type_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(CONDITION_TYPE IN ('NI','UN','OT') OR CONDITION_TYPE IS NULL) AS BAD
     FROM {{ current_schema }}.CONDITION
-    WHERE REPORT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE REPORT_DATE >= TO_DATE('{{ start_date }}') AND REPORT_DATE <= TO_DATE('{{ end_date }}')
 ),
 imm_code_type_check AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(VX_CODE_TYPE IN ('NI','UN','OT') OR VX_CODE_TYPE IS NULL) AS BAD
     FROM {{ current_schema }}.IMMUNIZATION
-    WHERE VX_ADMIN_DATE >= TO_DATE('{{ start_date }}')
+    WHERE VX_ADMIN_DATE >= TO_DATE('{{ start_date }}') AND VX_ADMIN_DATE <= TO_DATE('{{ end_date }}')
 ),
 all_checks AS (
     SELECT TOTAL, BAD FROM sex_check          UNION ALL

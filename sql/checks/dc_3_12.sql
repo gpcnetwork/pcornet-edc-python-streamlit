@@ -6,7 +6,7 @@ WITH quant AS (
     SELECT COUNT(*) AS TOTAL,
            COUNT_IF(RESULT_UNIT NOT IN ('NI','UN','OT') AND RESULT_UNIT IS NOT NULL) AS WITH_UNIT
     FROM {{ current_schema }}.LAB_RESULT_CM
-    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}') AND RESULT_DATE <= TO_DATE('{{ end_date }}')
       AND LAB_LOINC IS NOT NULL
       AND RESULT_NUM IS NOT NULL
       AND RESULT_MODIFIER NOT IN ('NI','UN','OT') AND COALESCE(RESULT_MODIFIER,'') != ''

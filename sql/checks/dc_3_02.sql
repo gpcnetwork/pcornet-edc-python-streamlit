@@ -8,7 +8,7 @@ WITH px_per_enc AS (
     FROM {{ current_schema }}.ENCOUNTER e
     LEFT JOIN {{ current_schema }}.PROCEDURES p ON p.ENCOUNTERID = e.ENCOUNTERID
     WHERE e.ENC_TYPE IN ('AV','ED','EI','IP')
-      AND e.ADMIT_DATE >= TO_DATE('{{ start_date }}')
+      AND e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY e.ENCOUNTERID, e.ENC_TYPE
 ),
 avg_by_type AS (

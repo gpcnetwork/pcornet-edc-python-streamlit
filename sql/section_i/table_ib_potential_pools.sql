@@ -7,31 +7,31 @@ WITH total_patients AS (
 ),
 enc_patient_pool_5 AS (
     SELECT DISTINCT patid FROM {{ current_schema }}.encounter
-    WHERE admit_date >= '{{ filter_date }}' AND ENC_TYPE IN ('EI','ED','AV','IP','OS')
+    WHERE admit_date >= '{{ filter_date }}' AND admit_date <= '{{ end_date }}' AND ENC_TYPE IN ('EI','ED','AV','IP','OS')
 ),
 total_enc_patients AS (
     SELECT COUNT(DISTINCT patid) AS enc_n FROM enc_patient_pool_5
 ),
 enc_patient_pool_1 AS (
     SELECT DISTINCT patid FROM {{ current_schema }}.encounter
-    WHERE admit_date >= '{{ year_1 }}' AND ENC_TYPE IN ('EI','ED','AV','IP','OS')
+    WHERE admit_date >= '{{ year_1 }}' AND admit_date <= '{{ end_date }}' AND ENC_TYPE IN ('EI','ED','AV','IP','OS')
 ),
 diagnosis_patient_pool_5 AS (
     SELECT DISTINCT patid FROM {{ current_schema }}.DIAGNOSIS
-    WHERE enc_type IN ('EI','ED','AV','IP','OS') AND ADMIT_DATE >= '{{ filter_date }}'
+    WHERE enc_type IN ('EI','ED','AV','IP','OS') AND ADMIT_DATE >= '{{ filter_date }}' AND ADMIT_DATE <= '{{ end_date }}'
 ),
 procedures_patient_pool_5 AS (
-    SELECT DISTINCT patid FROM {{ current_schema }}.procedures WHERE ADMIT_DATE >= '{{ filter_date }}'
+    SELECT DISTINCT patid FROM {{ current_schema }}.procedures WHERE ADMIT_DATE >= '{{ filter_date }}' AND ADMIT_DATE <= '{{ end_date }}'
 ),
 diagnosis_vital_patient_pool_5 AS (
     SELECT DISTINCT patid FROM diagnosis_patient_pool_5
     INTERSECT
-    SELECT DISTINCT patid FROM {{ current_schema }}.vital WHERE MEASURE_DATE >= '{{ filter_date }}'
+    SELECT DISTINCT patid FROM {{ current_schema }}.vital WHERE MEASURE_DATE >= '{{ filter_date }}' AND MEASURE_DATE <= '{{ end_date }}'
 ),
 prescribing_or_med_admin_patient_pool_5 AS (
-    SELECT DISTINCT patid FROM {{ current_schema }}.prescribing WHERE RX_ORDER_DATE >= '{{ filter_date }}'
+    SELECT DISTINCT patid FROM {{ current_schema }}.prescribing WHERE RX_ORDER_DATE >= '{{ filter_date }}' AND RX_ORDER_DATE <= '{{ end_date }}'
     UNION
-    SELECT DISTINCT patid FROM {{ current_schema }}.med_admin WHERE MEDADMIN_START_DATE >= '{{ filter_date }}'
+    SELECT DISTINCT patid FROM {{ current_schema }}.med_admin WHERE MEDADMIN_START_DATE >= '{{ filter_date }}' AND MEDADMIN_START_DATE <= '{{ end_date }}'
 ),
 diagnosis_vital_and_prescribing_or_med_admin_patient_pool_5 AS (
     SELECT DISTINCT patid FROM diagnosis_vital_patient_pool_5
@@ -41,7 +41,7 @@ diagnosis_vital_and_prescribing_or_med_admin_patient_pool_5 AS (
 diagnosis_vital_and_prescribing_or_med_admin_lab_result_cm_patient_pool_5 AS (
     SELECT DISTINCT patid FROM diagnosis_vital_and_prescribing_or_med_admin_patient_pool_5
     INTERSECT
-    SELECT DISTINCT patid FROM {{ current_schema }}.lab_result_cm WHERE RESULT_DATE >= '{{ filter_date }}'
+    SELECT DISTINCT patid FROM {{ current_schema }}.lab_result_cm WHERE RESULT_DATE >= '{{ filter_date }}' AND RESULT_DATE <= '{{ end_date }}'
 ),
 enc_diagnosis_patient_pool_5 AS (
     SELECT DISTINCT patid FROM enc_patient_pool_5

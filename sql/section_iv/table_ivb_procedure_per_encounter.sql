@@ -8,7 +8,7 @@ WITH enc_counts AS (
              ELSE 'Missing/NI/UN/OT' END AS ENC_TYPE_GRP,
         COUNT(*) AS ENC_RECORDS
     FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 px_counts AS (
@@ -18,7 +18,7 @@ px_counts AS (
         COUNT(*) AS PX_RECORDS,
         SUM(CASE WHEN PX_TYPE NOT IN ('NI','UN','OT') THEN 1 ELSE 0 END) AS PX_RECORDS_KNOWN_PXTYPE
     FROM {{ current_schema }}.PROCEDURES
-    WHERE PX_DATE >= TO_DATE('{{ start_date }}')
+    WHERE PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 all_types AS (

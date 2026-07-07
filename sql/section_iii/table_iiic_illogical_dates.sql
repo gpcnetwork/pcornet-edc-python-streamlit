@@ -5,7 +5,7 @@
 
 WITH enc_patients AS (
     SELECT COUNT(DISTINCT PATID) AS TOTAL FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 birth_death AS (
     SELECT dem.PATID, dem.BIRTH_DATE, d.DEATH_DATE
@@ -24,7 +24,7 @@ FROM enc_patients ep,
            1 AS ROW_ORDER
     FROM {{ current_schema }}.ENCOUNTER e
     JOIN birth_death bd ON bd.PATID = e.PATID
-    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND e.ADMIT_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -33,7 +33,7 @@ FROM enc_patients ep,
            2
     FROM {{ current_schema }}.ENCOUNTER e
     JOIN birth_death bd ON bd.PATID = e.PATID
-    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND e.DISCHARGE_DATE IS NOT NULL AND e.DISCHARGE_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -42,7 +42,7 @@ FROM enc_patients ep,
            3
     FROM {{ current_schema }}.PROCEDURES p
     JOIN birth_death bd ON bd.PATID = p.PATID
-    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND p.PX_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND p.PX_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -51,7 +51,7 @@ FROM enc_patients ep,
            4
     FROM {{ current_schema }}.DIAGNOSIS d
     JOIN birth_death bd ON bd.PATID = d.PATID
-    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND d.ADMIT_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND d.ADMIT_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -60,7 +60,7 @@ FROM enc_patients ep,
            5
     FROM {{ current_schema }}.VITAL v
     JOIN birth_death bd ON bd.PATID = v.PATID
-    WHERE v.MEASURE_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE v.MEASURE_DATE >= TO_DATE('{{ start_date }}') AND v.MEASURE_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND v.MEASURE_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -69,7 +69,7 @@ FROM enc_patients ep,
            6
     FROM {{ current_schema }}.DISPENSING d
     JOIN birth_death bd ON bd.PATID = d.PATID
-    WHERE d.DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE d.DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND d.DISPENSE_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND d.DISPENSE_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -78,7 +78,7 @@ FROM enc_patients ep,
            7
     FROM {{ current_schema }}.PRESCRIBING p
     JOIN birth_death bd ON bd.PATID = p.PATID
-    WHERE p.RX_START_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE p.RX_START_DATE >= TO_DATE('{{ start_date }}') AND p.RX_START_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND p.RX_START_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -87,7 +87,7 @@ FROM enc_patients ep,
            8
     FROM {{ current_schema }}.LAB_RESULT_CM l
     JOIN birth_death bd ON bd.PATID = l.PATID
-    WHERE l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND l.RESULT_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND l.RESULT_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -104,7 +104,7 @@ FROM enc_patients ep,
            10
     FROM {{ current_schema }}.MED_ADMIN m
     JOIN birth_death bd ON bd.PATID = m.PATID
-    WHERE m.MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE m.MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND m.MEDADMIN_START_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND m.MEDADMIN_START_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -113,7 +113,7 @@ FROM enc_patients ep,
            11
     FROM {{ current_schema }}.OBS_CLIN o
     JOIN birth_death bd ON bd.PATID = o.PATID
-    WHERE o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND o.OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND o.OBSCLIN_START_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -122,7 +122,7 @@ FROM enc_patients ep,
            12
     FROM {{ current_schema }}.OBS_GEN o
     JOIN birth_death bd ON bd.PATID = o.PATID
-    WHERE o.OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.BIRTH_DATE IS NOT NULL
+    WHERE o.OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND o.OBSGEN_START_DATE <= TO_DATE('{{ end_date }}') AND bd.BIRTH_DATE IS NOT NULL
       AND o.OBSGEN_START_DATE < bd.BIRTH_DATE
 
     UNION ALL
@@ -141,7 +141,7 @@ FROM enc_patients ep,
            14
     FROM {{ current_schema }}.ENCOUNTER e
     JOIN birth_death bd ON bd.PATID = e.PATID
-    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND e.ADMIT_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -150,7 +150,7 @@ FROM enc_patients ep,
            15
     FROM {{ current_schema }}.ENCOUNTER e
     JOIN birth_death bd ON bd.PATID = e.PATID
-    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND e.DISCHARGE_DATE IS NOT NULL AND e.DISCHARGE_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -159,7 +159,7 @@ FROM enc_patients ep,
            16
     FROM {{ current_schema }}.PROCEDURES p
     JOIN birth_death bd ON bd.PATID = p.PATID
-    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND p.PX_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND p.PX_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -168,7 +168,7 @@ FROM enc_patients ep,
            17
     FROM {{ current_schema }}.DIAGNOSIS d
     JOIN birth_death bd ON bd.PATID = d.PATID
-    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND d.ADMIT_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND d.ADMIT_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -177,7 +177,7 @@ FROM enc_patients ep,
            18
     FROM {{ current_schema }}.VITAL v
     JOIN birth_death bd ON bd.PATID = v.PATID
-    WHERE v.MEASURE_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE v.MEASURE_DATE >= TO_DATE('{{ start_date }}') AND v.MEASURE_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND v.MEASURE_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -186,7 +186,7 @@ FROM enc_patients ep,
            19
     FROM {{ current_schema }}.DISPENSING d
     JOIN birth_death bd ON bd.PATID = d.PATID
-    WHERE d.DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE d.DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND d.DISPENSE_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND d.DISPENSE_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -195,7 +195,7 @@ FROM enc_patients ep,
            20
     FROM {{ current_schema }}.PRESCRIBING p
     JOIN birth_death bd ON bd.PATID = p.PATID
-    WHERE p.RX_START_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE p.RX_START_DATE >= TO_DATE('{{ start_date }}') AND p.RX_START_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND p.RX_START_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -204,7 +204,7 @@ FROM enc_patients ep,
            21
     FROM {{ current_schema }}.LAB_RESULT_CM l
     JOIN birth_death bd ON bd.PATID = l.PATID
-    WHERE l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND l.RESULT_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND l.RESULT_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -213,7 +213,7 @@ FROM enc_patients ep,
            22
     FROM {{ current_schema }}.MED_ADMIN m
     JOIN birth_death bd ON bd.PATID = m.PATID
-    WHERE m.MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE m.MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND m.MEDADMIN_START_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND m.MEDADMIN_START_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -222,7 +222,7 @@ FROM enc_patients ep,
            23
     FROM {{ current_schema }}.OBS_CLIN o
     JOIN birth_death bd ON bd.PATID = o.PATID
-    WHERE o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND o.OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND o.OBSCLIN_START_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -231,7 +231,7 @@ FROM enc_patients ep,
            24
     FROM {{ current_schema }}.OBS_GEN o
     JOIN birth_death bd ON bd.PATID = o.PATID
-    WHERE o.OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND bd.DEATH_DATE IS NOT NULL
+    WHERE o.OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND o.OBSGEN_START_DATE <= TO_DATE('{{ end_date }}') AND bd.DEATH_DATE IS NOT NULL
       AND o.OBSGEN_START_DATE > bd.DEATH_DATE
 
     UNION ALL
@@ -249,7 +249,7 @@ FROM enc_patients ep,
            COUNT(DISTINCT PATID),
            26
     FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND DISCHARGE_DATE IS NOT NULL
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}') AND DISCHARGE_DATE IS NOT NULL
       AND DISCHARGE_DATE < ADMIT_DATE
 
     UNION ALL
@@ -258,7 +258,7 @@ FROM enc_patients ep,
            27
     FROM {{ current_schema }}.PROCEDURES p
     JOIN {{ current_schema }}.ENCOUNTER e ON e.ENCOUNTERID = p.ENCOUNTERID
-    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE IS NOT NULL
+    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND p.PX_DATE <= TO_DATE('{{ end_date }}') AND e.ADMIT_DATE IS NOT NULL
       AND p.PX_DATE < DATEADD(day, -5, e.ADMIT_DATE)
 
     UNION ALL
@@ -267,7 +267,7 @@ FROM enc_patients ep,
            28
     FROM {{ current_schema }}.PROCEDURES p
     JOIN {{ current_schema }}.ENCOUNTER e ON e.ENCOUNTERID = p.ENCOUNTERID
-    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND e.DISCHARGE_DATE IS NOT NULL
+    WHERE p.PX_DATE >= TO_DATE('{{ start_date }}') AND p.PX_DATE <= TO_DATE('{{ end_date }}') AND e.DISCHARGE_DATE IS NOT NULL
       AND p.PX_DATE > DATEADD(day, 5, e.DISCHARGE_DATE)
 
     UNION ALL
@@ -276,7 +276,7 @@ FROM enc_patients ep,
            29
     FROM {{ current_schema }}.DIAGNOSIS d
     JOIN {{ current_schema }}.ENCOUNTER e ON e.ENCOUNTERID = d.ENCOUNTERID
-    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE IS NOT NULL
+    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND d.ADMIT_DATE <= TO_DATE('{{ end_date }}') AND e.ADMIT_DATE IS NOT NULL
       AND d.ADMIT_DATE < DATEADD(day, -5, e.ADMIT_DATE)
 
     UNION ALL
@@ -285,7 +285,7 @@ FROM enc_patients ep,
            30
     FROM {{ current_schema }}.DIAGNOSIS d
     JOIN {{ current_schema }}.ENCOUNTER e ON e.ENCOUNTERID = d.ENCOUNTERID
-    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.DISCHARGE_DATE IS NOT NULL
+    WHERE d.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND d.ADMIT_DATE <= TO_DATE('{{ end_date }}') AND e.DISCHARGE_DATE IS NOT NULL
       AND d.ADMIT_DATE > DATEADD(day, 5, e.DISCHARGE_DATE)
 
     UNION ALL
@@ -293,7 +293,7 @@ FROM enc_patients ep,
            COUNT(DISTINCT PATID),
            31
     FROM {{ current_schema }}.OBS_CLIN
-    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSCLIN_STOP_DATE IS NOT NULL
+    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}') AND OBSCLIN_STOP_DATE IS NOT NULL
       AND OBSCLIN_START_DATE > OBSCLIN_STOP_DATE
 
     UNION ALL
@@ -301,7 +301,7 @@ FROM enc_patients ep,
            COUNT(DISTINCT PATID),
            32
     FROM {{ current_schema }}.OBS_GEN
-    WHERE OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSGEN_STOP_DATE IS NOT NULL
+    WHERE OBSGEN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSGEN_START_DATE <= TO_DATE('{{ end_date }}') AND OBSGEN_STOP_DATE IS NOT NULL
       AND OBSGEN_START_DATE > OBSGEN_STOP_DATE
 
     UNION ALL
@@ -325,7 +325,7 @@ FROM enc_patients ep,
            COUNT(DISTINCT PATID),
            35
     FROM {{ current_schema }}.MED_ADMIN
-    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND MEDADMIN_STOP_DATE IS NOT NULL
+    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND MEDADMIN_START_DATE <= TO_DATE('{{ end_date }}') AND MEDADMIN_STOP_DATE IS NOT NULL
       AND MEDADMIN_START_DATE > MEDADMIN_STOP_DATE
 
 ) checks

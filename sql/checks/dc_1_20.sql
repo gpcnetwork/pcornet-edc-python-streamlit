@@ -17,7 +17,7 @@ lab AS (
     FROM {{ current_schema }}.LAB_RESULT_CM l
     LEFT JOIN panel_ref p ON TRIM(UPPER(l.LAB_LOINC)) = p.LOINC_NUM
     WHERE l.LAB_LOINC IS NOT NULL
-      AND l.RESULT_DATE >= TO_DATE('{{ start_date }}')
+      AND l.RESULT_DATE >= TO_DATE('{{ start_date }}') AND l.RESULT_DATE <= TO_DATE('{{ end_date }}')
 ),
 obs AS (
     SELECT COUNT(*) AS TOTAL,
@@ -25,7 +25,7 @@ obs AS (
     FROM {{ current_schema }}.OBS_CLIN o
     LEFT JOIN panel_ref p ON TRIM(UPPER(o.OBSCLIN_CODE)) = p.LOINC_NUM
     WHERE o.OBSCLIN_CODE IS NOT NULL AND o.OBSCLIN_TYPE = 'LC'
-      AND o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}')
+      AND o.OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND o.OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}')
 ),
 pro AS (
     SELECT COUNT(*) AS TOTAL,

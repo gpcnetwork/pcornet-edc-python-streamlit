@@ -12,7 +12,7 @@ WITH lab AS (
                )
            ) AS MAPPED_WITH_RESULT
     FROM {{ current_schema }}.LAB_RESULT_CM
-    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}') AND RESULT_DATE <= TO_DATE('{{ end_date }}')
 )
 SELECT
     '3.09'                                                                  AS CHECK_NUM,

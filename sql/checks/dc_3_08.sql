@@ -14,7 +14,7 @@ rx AS (
                SELECT 1 FROM rxnorm_tier1 r WHERE r.rxcui_str = TRIM(p.RXNORM_CUI)::VARCHAR
            )) AS TIER1_MAPPED
     FROM {{ current_schema }}.PRESCRIBING p
-    WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}') AND RX_ORDER_DATE <= TO_DATE('{{ end_date }}')
 )
 SELECT
     '3.08'                                                                                              AS CHECK_NUM,

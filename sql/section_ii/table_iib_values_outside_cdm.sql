@@ -44,7 +44,7 @@ WITH violations AS (
         SELECT 'ENCOUNTER', 'ENC_TYPE',
                COUNT(*)
         FROM {{ current_schema }}.ENCOUNTER
-        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
           AND ENC_TYPE NOT IN ('AV','ED','EI','IC','IP','IS','NI','NN','OA','OS','TH','UN','OT') AND ENC_TYPE IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -52,7 +52,7 @@ WITH violations AS (
         SELECT 'ENCOUNTER', 'DISCHARGE_STATUS',
                COUNT(*)
         FROM {{ current_schema }}.ENCOUNTER
-        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
           AND DISCHARGE_STATUS NOT IN ('AF','AL','AM','AW','EX','HH','HS','IP','MA','MF','NH','OT','RH','SH','SN','NI','UN') AND DISCHARGE_STATUS IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -67,7 +67,7 @@ WITH violations AS (
         SELECT 'DIAGNOSIS', 'DX_TYPE',
                COUNT(*)
         FROM {{ current_schema }}.DIAGNOSIS
-        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
           AND DX_TYPE NOT IN ('09','10','11','SM','NI','UN','OT') AND DX_TYPE IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -75,7 +75,7 @@ WITH violations AS (
         SELECT 'DIAGNOSIS', 'PDX',
                COUNT(*)
         FROM {{ current_schema }}.DIAGNOSIS
-        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
           AND PDX NOT IN ('P','S','X','NI','UN','OT') AND PDX IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -83,7 +83,7 @@ WITH violations AS (
         SELECT 'DIAGNOSIS', 'DX_ORIGIN',
                COUNT(*)
         FROM {{ current_schema }}.DIAGNOSIS
-        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+        WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
           AND DX_ORIGIN NOT IN ('OD','BI','CL','DR','NI','UN','OT') AND DX_ORIGIN IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -91,7 +91,7 @@ WITH violations AS (
         SELECT 'PROCEDURES', 'PX_TYPE',
                COUNT(*)
         FROM {{ current_schema }}.PROCEDURES
-        WHERE PX_DATE >= TO_DATE('{{ start_date }}')
+        WHERE PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}')
           AND PX_TYPE NOT IN ('09','10','11','C2','C3','C4','H3','LC','ND','OT','RE','NI','UN') AND PX_TYPE IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -99,7 +99,7 @@ WITH violations AS (
         SELECT 'PROCEDURES', 'PPX',
                COUNT(*)
         FROM {{ current_schema }}.PROCEDURES
-        WHERE PX_DATE >= TO_DATE('{{ start_date }}')
+        WHERE PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}')
           AND PPX NOT IN ('P','S','X','NI','UN','OT') AND PPX IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -107,7 +107,7 @@ WITH violations AS (
         SELECT 'VITAL', 'VITAL_SOURCE',
                COUNT(*)
         FROM {{ current_schema }}.VITAL
-        WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}')
+        WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
           AND VITAL_SOURCE NOT IN ('HC','HD','PR','RD','NI','UN','OT') AND VITAL_SOURCE IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -115,7 +115,7 @@ WITH violations AS (
         SELECT 'VITAL', 'SMOKING',
                COUNT(*)
         FROM {{ current_schema }}.VITAL
-        WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}')
+        WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
           AND SMOKING NOT IN ('01','02','03','04','05','06','07','08','NI','UN','OT') AND SMOKING IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -123,7 +123,7 @@ WITH violations AS (
         SELECT 'PRESCRIBING', 'RX_BASIS',
                COUNT(*)
         FROM {{ current_schema }}.PRESCRIBING
-        WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}')
+        WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}') AND RX_ORDER_DATE <= TO_DATE('{{ end_date }}')
           AND RX_BASIS NOT IN ('01','02','NI','UN','OT') AND RX_BASIS IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -131,7 +131,7 @@ WITH violations AS (
         SELECT 'LAB_RESULT_CM', 'RESULT_LOC',
                COUNT(*)
         FROM {{ current_schema }}.LAB_RESULT_CM
-        WHERE RESULT_DATE >= TO_DATE('{{ start_date }}')
+        WHERE RESULT_DATE >= TO_DATE('{{ start_date }}') AND RESULT_DATE <= TO_DATE('{{ end_date }}')
           AND RESULT_LOC NOT IN ('L','P','NI','UN','OT') AND RESULT_LOC IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -139,7 +139,7 @@ WITH violations AS (
         SELECT 'CONDITION', 'CONDITION_TYPE',
                COUNT(*)
         FROM {{ current_schema }}.CONDITION
-        WHERE REPORT_DATE >= TO_DATE('{{ start_date }}')
+        WHERE REPORT_DATE >= TO_DATE('{{ start_date }}') AND REPORT_DATE <= TO_DATE('{{ end_date }}')
           AND CONDITION_TYPE NOT IN ('09','10','SM','HP','AG','NI','UN','OT') AND CONDITION_TYPE IS NOT NULL
         HAVING COUNT(*) > 0
 
@@ -147,7 +147,7 @@ WITH violations AS (
         SELECT 'CONDITION', 'CONDITION_STATUS',
                COUNT(*)
         FROM {{ current_schema }}.CONDITION
-        WHERE REPORT_DATE >= TO_DATE('{{ start_date }}')
+        WHERE REPORT_DATE >= TO_DATE('{{ start_date }}') AND REPORT_DATE <= TO_DATE('{{ end_date }}')
           AND CONDITION_STATUS NOT IN ('AC','IN','RS','NI','UN','OT') AND CONDITION_STATUS IS NOT NULL
         HAVING COUNT(*) > 0
     ) sub

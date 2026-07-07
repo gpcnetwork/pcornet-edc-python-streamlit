@@ -12,11 +12,12 @@ from views.section_view import render_section_view
 
 
 def _ensure_dq_run_id(session, schema, cutoff_date, network_id, site_id,
-                      session_id=None, prev_schema=None) -> str:
+                      session_id=None, prev_schema=None, lookback_years=10) -> str:
     if not st.session_state.get("dq_run_id"):
         run_id = RunRepository(get_meta_conn()).begin_run(
             network_id, site_id, schema, cutoff_date=cutoff_date,
-            triggered_by="dq_checks", session_id=session_id, prev_schema=prev_schema
+            triggered_by="dq_checks", session_id=session_id, prev_schema=prev_schema,
+            lookback_years=lookback_years,
         )
         st.session_state["dq_run_id"] = run_id
     return st.session_state["dq_run_id"]
@@ -115,9 +116,10 @@ def _execute_missing(session, run_env, sections_df):
     site_id     = active.get("site_id", "")
     db_name     = active.get("database_name", "")
     schema      = run_env["current_schema"]
-    prev_schema = run_env.get("prev_schema")
-    cutoff_date = run_env.get("cutoff_date")
-    session_id  = run_env.get("session_id")
+    prev_schema    = run_env.get("prev_schema")
+    cutoff_date    = run_env.get("cutoff_date")
+    lookback_years = run_env.get("lookback_years", 10)
+    session_id     = run_env.get("session_id")
 
     import time as _time
     st.session_state.setdefault("dq_results",   {})
@@ -140,7 +142,8 @@ def _execute_missing(session, run_env, sections_df):
         )
     ]
     if not missing_dq.empty:
-        run_id = _ensure_dq_run_id(session, schema, cutoff_date, network_id, site_id, session_id, prev_schema)
+        run_id = _ensure_dq_run_id(session, schema, cutoff_date, network_id, site_id,
+                                   session_id, prev_schema, lookback_years)
         prog   = st.progress(0, text="Running missing DQ checks…")
         total  = len(missing_dq)
         for i, (_, row) in enumerate(missing_dq.iterrows()):
@@ -149,6 +152,7 @@ def _execute_missing(session, run_env, sections_df):
             success, result = run_single_check(
                 session, row, schema, db_name, run_id, network_id, site_id,
                 cutoff_date=cutoff_date, prev_schema=prev_schema,
+                lookback_years=lookback_years,
             )
             st.session_state["dq_durations"][rk] = int((_time.perf_counter() - t0) * 1000)
             st.session_state["dq_results"][rk]   = result
@@ -183,7 +187,7 @@ def _execute_missing(session, run_env, sections_df):
         sec_run_id = RunRepository(get_meta_conn()).begin_run(
             network_id, site_id, schema,
             cutoff_date=cutoff_date, triggered_by=slug, session_id=session_id,
-            prev_schema=prev_schema
+            prev_schema=prev_schema, lookback_years=lookback_years,
         )
         st.session_state[f"{slug}_run_id"] = sec_run_id
 
@@ -196,6 +200,7 @@ def _execute_missing(session, run_env, sections_df):
                 session, row["SQL_File_Ref"], schema, db_name,
                 sec_run_id, item_key, network_id, site_id,
                 prev_schema=prev_schema, cutoff_date=cutoff_date,
+                lookback_years=lookback_years,
             )
             st.session_state[f"{slug}_durations"][item_key] = int((_time.perf_counter() - t0) * 1000)
             st.session_state[f"{slug}_results"][item_key]   = result
@@ -208,10 +213,11 @@ def render_analysis_view(session):
     active  = st.session_state.get("active_site", {})
     run_env = st.session_state["run_env"]
 
-    schema      = run_env["current_schema"]
-    prev_schema = run_env.get("prev_schema")
-    cutoff_date = run_env.get("cutoff_date")
-    session_id  = run_env.get("session_id")
+    schema         = run_env["current_schema"]
+    prev_schema    = run_env.get("prev_schema")
+    cutoff_date    = run_env.get("cutoff_date")
+    lookback_years = run_env.get("lookback_years", 10)
+    session_id     = run_env.get("session_id")
 
     sections_df = load_sections()
 
@@ -255,6 +261,7 @@ def render_analysis_view(session):
         info_parts.append(f"Prev: `{prev_schema}`")
     if cutoff_date:
         info_parts.append(f"Cutoff: `{cutoff_date}`")
+    info_parts.append(f"Lookback: `{lookback_years}y`")
     if total_ms:
         info_parts.append(f"Total time: `{fmt_ms(total_ms)}`")
     st.info("  ·  ".join(info_parts))
@@ -308,9 +315,11 @@ def render_analysis_view(session):
 
     # Render only the active view
     if active_tab == 0:
-        render_dq_checks_view(session, schema, cutoff_date, prev_schema=prev_schema, session_id=session_id)
+        render_dq_checks_view(session, schema, cutoff_date, prev_schema=prev_schema,
+                              session_id=session_id, lookback_years=lookback_years)
     else:
         section_name = section_names[active_tab - 1]
         items = sections_df[sections_df["Section"] == section_name].reset_index(drop=True)
         render_section_view(session, section_name, items, schema, cutoff_date,
-                            prev_schema, session_id=session_id)
+                            prev_schema, session_id=session_id,
+                            lookback_years=lookback_years)

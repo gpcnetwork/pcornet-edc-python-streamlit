@@ -1,4 +1,3 @@
-import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -6,19 +5,8 @@ import streamlit as st
 
 from utils.db import get_meta_conn
 from utils.run_repository import RunRepository
-from utils.sql_loader import load_sql, _REF_SCHEMA, _REQUIRED_STRUCTURE_FQN
+from utils.sql_loader import load_sql, SqlLoader, DEFAULT_LOOKBACK_YEARS
 from utils.table_renderer import TableRenderer
-
-
-def _to_date(d) -> datetime.date | None:
-    if d is None:
-        return None
-    if isinstance(d, datetime.date):
-        return d
-    try:
-        return datetime.date.fromisoformat(str(d)[:10])
-    except (ValueError, TypeError):
-        return None
 
 
 @st.cache_data
@@ -32,31 +20,13 @@ def run_section_item(
     run_id: str, query_name: str, network_id: str = "", site_id: str = "",
     prev_schema: str | None = None,
     cutoff_date=None,
+    lookback_years: int = DEFAULT_LOOKBACK_YEARS,
 ) -> tuple[bool, list]:
     try:
-        cutoff_dt    = _to_date(cutoff_date)
-        ref_dt       = cutoff_dt or datetime.date.today()
-        start_dt     = ref_dt.replace(year=ref_dt.year - 5)
-        year_1_dt    = ref_dt.replace(year=ref_dt.year - 1)
-        report_month = ref_dt.replace(day=1)
-        last_schema  = prev_schema or ""
-
-        sql = load_sql(
-            sql_file,
-            current_schema=schema,
-            db_name=db_name,
-            prev_schema=last_schema,
-            last_schema=last_schema,
-            start_date=str(start_dt),
-            end_date=str(ref_dt),
-            cutoff_date=str(cutoff_dt) if cutoff_dt else None,
-            filter_date=str(start_dt),
-            year_1=str(year_1_dt),
-            report_month=str(report_month),
-            loinc_ref_fqn=f"{_REF_SCHEMA}.LOINC",
-            rxnorm_ref_fqn=f"{_REF_SCHEMA}.RXNORM_CUI_REF",
-            required_structure_fqn=_REQUIRED_STRUCTURE_FQN,
+        params = SqlLoader.build_display_params(
+            schema, db_name, cutoff_date, prev_schema or "", lookback_years,
         )
+        sql = load_sql(sql_file, **params)
         records = RunRepository(get_meta_conn()).run_sql_with_meta(
             session, sql, query_name, run_id, network_id, site_id
         )

@@ -7,7 +7,7 @@ WITH visits AS (
     SELECT PATID, ENC_TYPE, ADMIT_DATE, PROVIDERID, COUNT(*) AS ENC_COUNT
     FROM {{ current_schema }}.ENCOUNTER
     WHERE ENC_TYPE IN ('IP','ED','EI')
-      AND ADMIT_DATE >= TO_DATE('{{ start_date }}')
+      AND ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY PATID, ENC_TYPE, ADMIT_DATE, PROVIDERID
 ),
 avg_enc AS (SELECT ROUND(AVG(ENC_COUNT), 2) AS AVG_ENC_PER_VISIT FROM visits)

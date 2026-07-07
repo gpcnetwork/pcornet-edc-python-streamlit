@@ -33,15 +33,17 @@ class RunRepository:
     def begin_run(self, network_id: str, site_id: str, cdm_schema: str,
                   cutoff_date=None, triggered_by: str = "",
                   session_id: str | None = None,
-                  prev_schema: str | None = None) -> str:
+                  prev_schema: str | None = None,
+                  lookback_years: int = 10) -> str:
         run_id = str(uuid.uuid4())
         self._exec(
             f"INSERT INTO {DQ_RUNS_TABLE} "
-            "(RUN_ID, NETWORK_ID, SITE_ID, CDM_SCHEMA, CUTOFF_DATE, "
+            "(RUN_ID, NETWORK_ID, SITE_ID, CDM_SCHEMA, CUTOFF_DATE, LOOKBACK_YEARS, "
             "TRIGGERED_BY, STATUS, STARTED_AT, SESSION_ID, PREV_SCHEMA) "
-            "VALUES (?, ?, ?, ?, ?, ?, 'RUNNING', CURRENT_TIMESTAMP, ?, ?)",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 'RUNNING', CURRENT_TIMESTAMP, ?, ?)",
             [run_id, network_id, site_id, str(cdm_schema),
              str(cutoff_date)[:10] if cutoff_date else None,
+             int(lookback_years),
              str(triggered_by), session_id, prev_schema],
         )
         return run_id
@@ -60,6 +62,7 @@ class RunRepository:
             SELECT
                 COALESCE(r.SESSION_ID, r.RUN_ID)                                    AS SESSION_ID,
                 r.CDM_SCHEMA, r.CUTOFF_DATE,
+                MAX(r.LOOKBACK_YEARS)                                                AS LOOKBACK_YEARS,
                 MAX(r.PREV_SCHEMA)                                                   AS PREV_SCHEMA,
                 MIN(r.STARTED_AT)                                                    AS STARTED_AT,
                 CASE WHEN SUM(CASE WHEN r.STATUS != 'COMPLETE' THEN 1 ELSE 0 END) > 0

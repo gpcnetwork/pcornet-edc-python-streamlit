@@ -9,11 +9,11 @@ WITH birth_after_service AS (
     FROM {{ current_schema }}.ENCOUNTER e
     JOIN {{ current_schema }}.DEMOGRAPHIC d ON e.PATID = d.PATID
     WHERE e.ADMIT_DATE < d.BIRTH_DATE
-      AND e.ADMIT_DATE >= TO_DATE('{{ start_date }}')
+      AND e.ADMIT_DATE >= TO_DATE('{{ start_date }}') AND e.ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 total_pats AS (
     SELECT COUNT(DISTINCT PATID) AS N FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 )
 SELECT
     '2.03'                                                     AS CHECK_NUM,

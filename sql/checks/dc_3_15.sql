@@ -15,7 +15,7 @@ med AS (
                SELECT 1 FROM rxnorm_tier1 r WHERE r.rxcui_str = TRIM(m.MEDADMIN_CODE)::VARCHAR
            )) AS TIER1_MAPPED
     FROM {{ current_schema }}.MED_ADMIN m
-    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND MEDADMIN_START_DATE <= TO_DATE('{{ end_date }}')
       AND MEDADMIN_TYPE = 'RX'
 )
 SELECT

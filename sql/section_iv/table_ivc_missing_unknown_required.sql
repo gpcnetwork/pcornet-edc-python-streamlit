@@ -38,14 +38,14 @@ dx AS (
         SUM(CASE WHEN ENC_TYPE     IS NULL OR ENC_TYPE     IN ('NI','UN','OT')          THEN 1 ELSE 0 END)               AS enc_type,
         SUM(CASE WHEN PROVIDERID   IS NULL                                              THEN 1 ELSE 0 END)               AS providerid
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 dx_ip_ei AS (
     SELECT
         COUNT(*)                                                                                                         AS total,
         SUM(CASE WHEN PDX IS NULL OR PDX IN ('NI','UN','OT')                            THEN 1 ELSE 0 END)               AS pdx
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
       AND ENC_TYPE IN ('IP', 'EI')
 ),
 enc AS (
@@ -62,7 +62,7 @@ enc AS (
         SUM(CASE WHEN PAYER_TYPE_SECONDARY IS NULL OR PAYER_TYPE_SECONDARY IN ('NI','UN','OT')   THEN 1 ELSE 0 END)     AS payer_type_secondary,
         SUM(CASE WHEN PROVIDERID           IS NULL                                               THEN 1 ELSE 0 END)     AS providerid
     FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 ),
 enc_ip_ei AS (
     SELECT
@@ -73,7 +73,7 @@ enc_ip_ei AS (
         SUM(CASE WHEN DISCHARGE_STATUS      IS NULL OR DISCHARGE_STATUS      IN ('NI','UN','OT') THEN 1 ELSE 0 END)     AS discharge_status,
         SUM(CASE WHEN DRG                   IS NULL OR DRG                   IN ('NI','UN','OT') THEN 1 ELSE 0 END)     AS drg
     FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
       AND ENC_TYPE IN ('IP', 'EI')
 ),
 enr AS (
@@ -95,7 +95,7 @@ px AS (
         SUM(CASE WHEN PX_SOURCE   IS NULL OR PX_SOURCE   IN ('NI','UN','OT')            THEN 1 ELSE 0 END)               AS px_source,
         SUM(CASE WHEN PX_TYPE     IS NULL OR PX_TYPE     IN ('NI','UN','OT')            THEN 1 ELSE 0 END)               AS px_type
     FROM {{ current_schema }}.PROCEDURES
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
 )
 SELECT TABLE_NAME, FIELD_NAME, ENC_TYPE_CONSTRAINT,
        TO_VARCHAR(NUMERATOR)   AS NUMERATOR,

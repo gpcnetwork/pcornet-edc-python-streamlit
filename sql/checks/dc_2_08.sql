@@ -7,43 +7,43 @@
 WITH enc_monthly AS (
     SELECT DATE_TRUNC('month', ADMIT_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.ENCOUNTER
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ENC_TYPE IN ('AV','TH','ED','EI','IP')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}') AND ENC_TYPE IN ('AV','TH','ED','EI','IP')
     GROUP BY 1
 ),
 dx_monthly AS (
     SELECT DATE_TRUNC('month', ADMIT_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.DIAGNOSIS
-    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ENC_TYPE IN ('AV','TH','ED','EI','IP')
+    WHERE ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}') AND ENC_TYPE IN ('AV','TH','ED','EI','IP')
     GROUP BY 1
 ),
 px_monthly AS (
     SELECT DATE_TRUNC('month', PX_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.PROCEDURES
-    WHERE PX_DATE >= TO_DATE('{{ start_date }}') AND ENC_TYPE IN ('AV','TH','ED','EI','IP')
+    WHERE PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}') AND ENC_TYPE IN ('AV','TH','ED','EI','IP')
     GROUP BY 1
 ),
 vital_monthly AS (
     SELECT DATE_TRUNC('month', MEASURE_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.VITAL
-    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 rx_monthly AS (
     SELECT DATE_TRUNC('month', RX_ORDER_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.PRESCRIBING
-    WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RX_ORDER_DATE >= TO_DATE('{{ start_date }}') AND RX_ORDER_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 lab_monthly AS (
     SELECT DATE_TRUNC('month', RESULT_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.LAB_RESULT_CM
-    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RESULT_DATE >= TO_DATE('{{ start_date }}') AND RESULT_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 medadmin_monthly AS (
     SELECT DATE_TRUNC('month', MEDADMIN_START_DATE) AS MONTH_START, COUNT(*) AS CNT
     FROM {{ current_schema }}.MED_ADMIN
-    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEDADMIN_START_DATE >= TO_DATE('{{ start_date }}') AND MEDADMIN_START_DATE <= TO_DATE('{{ end_date }}')
     GROUP BY 1
 ),
 all_domains AS (

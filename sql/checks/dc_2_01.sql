@@ -27,37 +27,37 @@ date_checks AS (
            SUM(CASE WHEN ADMIT_DATE > h.ANCHOR_DATE THEN 1 ELSE 0 END) AS FUTURE_CNT,
            COUNT(*) AS TOTAL
     FROM {{ current_schema }}.ENCOUNTER, harvest_anchor h
-    WHERE ADMIT_DATE IS NOT NULL AND ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE IS NOT NULL AND ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
     UNION ALL
     SELECT 'DIAGNOSIS.ADMIT_DATE',
            SUM(CASE WHEN ADMIT_DATE > h.ANCHOR_DATE THEN 1 ELSE 0 END),
            COUNT(*)
     FROM {{ current_schema }}.DIAGNOSIS, harvest_anchor h
-    WHERE ADMIT_DATE IS NOT NULL AND ADMIT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE ADMIT_DATE IS NOT NULL AND ADMIT_DATE >= TO_DATE('{{ start_date }}') AND ADMIT_DATE <= TO_DATE('{{ end_date }}')
     UNION ALL
     SELECT 'PROCEDURES.PX_DATE',
            SUM(CASE WHEN PX_DATE > h.ANCHOR_DATE THEN 1 ELSE 0 END),
            COUNT(*)
     FROM {{ current_schema }}.PROCEDURES, harvest_anchor h
-    WHERE PX_DATE IS NOT NULL AND PX_DATE >= TO_DATE('{{ start_date }}')
+    WHERE PX_DATE IS NOT NULL AND PX_DATE >= TO_DATE('{{ start_date }}') AND PX_DATE <= TO_DATE('{{ end_date }}')
     UNION ALL
     SELECT 'VITAL.MEASURE_DATE',
            SUM(CASE WHEN MEASURE_DATE > h.ANCHOR_DATE THEN 1 ELSE 0 END),
            COUNT(*)
     FROM {{ current_schema }}.VITAL, harvest_anchor h
-    WHERE MEASURE_DATE IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE MEASURE_DATE IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
     UNION ALL
     SELECT 'LAB_RESULT_CM.RESULT_DATE',
            SUM(CASE WHEN RESULT_DATE > h.ANCHOR_DATE THEN 1 ELSE 0 END),
            COUNT(*)
     FROM {{ current_schema }}.LAB_RESULT_CM, harvest_anchor h
-    WHERE RESULT_DATE IS NOT NULL AND RESULT_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RESULT_DATE IS NOT NULL AND RESULT_DATE >= TO_DATE('{{ start_date }}') AND RESULT_DATE <= TO_DATE('{{ end_date }}')
     UNION ALL
     SELECT 'PRESCRIBING.RX_ORDER_DATE',
            SUM(CASE WHEN RX_ORDER_DATE > h.ANCHOR_DATE THEN 1 ELSE 0 END),
            COUNT(*)
     FROM {{ current_schema }}.PRESCRIBING, harvest_anchor h
-    WHERE RX_ORDER_DATE IS NOT NULL AND RX_ORDER_DATE >= TO_DATE('{{ start_date }}')
+    WHERE RX_ORDER_DATE IS NOT NULL AND RX_ORDER_DATE >= TO_DATE('{{ start_date }}') AND RX_ORDER_DATE <= TO_DATE('{{ end_date }}')
 ),
 summary AS (
     SELECT MAX(ROUND(100.0 * FUTURE_CNT / NULLIF(TOTAL, 0), 2)) AS MAX_PCT_FUTURE

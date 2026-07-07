@@ -44,12 +44,18 @@ def _restore_from_url():
     except (ValueError, TypeError):
         cutoff = None
 
+    try:
+        lookback_years = int(st.query_params.get("lookback", "10"))
+    except (ValueError, TypeError):
+        lookback_years = 10
+
     prev_schema = st.query_params.get("prev_schema") or None
 
     st.session_state["run_env"] = {
         "current_schema":     schema,
         "prev_schema":        prev_schema,
         "cutoff_date":        cutoff,
+        "lookback_years":     lookback_years,
         "loaded_run_id":      None,
         "session_id":         session_id,
         "restore_session_id": session_id,

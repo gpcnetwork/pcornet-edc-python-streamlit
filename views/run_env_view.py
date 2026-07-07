@@ -53,7 +53,7 @@ def _render_session_list(session, active: dict):
     # Header row
     h1, h2, h3, h4, h5, h6, h7, h8, h9 = st.columns([3, 2, 2, 2, 2, 2, 1, 1, 1])
     h1.markdown("**Schema / Prev**")
-    h2.markdown("**Cutoff**")
+    h2.markdown("**Cutoff / Lookback**")
     h3.markdown("**Started**")
     h4.markdown("**Counts**")
     h5.markdown("**Results**")
@@ -84,7 +84,9 @@ def _render_session_row(session, s, total_expected: int = 0):
     prev = getattr(s, "PREV_SCHEMA", None)
     if prev:
         c1.caption(f"Prev: {prev}")
+    lookback_years = int(getattr(s, "LOOKBACK_YEARS", 10) or 10)
     c2.markdown(str(s.CUTOFF_DATE) if s.CUTOFF_DATE else "—")
+    c2.caption(f"{lookback_years}y lookback")
     c3.markdown(started)
     c4.markdown(f"DQ: {dq_count} · T: {table_count} · C: {chart_count}")
     c5.markdown(f"✅ {pass_count} · ❌ {fail_count} · ⬜ {not_run}")
@@ -95,16 +97,19 @@ def _render_session_row(session, s, total_expected: int = 0):
                      width="stretch"):
             _clear_result_state()
             prev_schema = getattr(s, "PREV_SCHEMA", None) or None
+            lookback_years = int(getattr(s, "LOOKBACK_YEARS", 10) or 10)
             st.session_state["run_env"] = {
                 "current_schema":     s.CDM_SCHEMA,
                 "prev_schema":        prev_schema,
                 "cutoff_date":        s.CUTOFF_DATE,
+                "lookback_years":     lookback_years,
                 "loaded_run_id":      None,
                 "session_id":         s.SESSION_ID,
                 "restore_session_id": s.SESSION_ID,
             }
             st.query_params["schema"]     = str(s.CDM_SCHEMA)
             st.query_params["session_id"] = str(s.SESSION_ID)
+            st.query_params["lookback"]   = str(lookback_years)
             st.query_params["cutoff"]     = str(s.CUTOFF_DATE)[:10] if s.CUTOFF_DATE else ""
             if prev_schema:
                 st.query_params["prev_schema"] = prev_schema
@@ -139,7 +144,7 @@ def _render_new_run(schemas: list, active: dict):
     default_schema = active.get("cdm_schema", "")
     default_idx = schemas.index(default_schema) if default_schema in schemas else 0
 
-    col1, col2, col3 = st.columns([2, 2, 2])
+    col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
 
     with col1:
         current_schema = st.selectbox(
@@ -162,6 +167,17 @@ def _render_new_run(schemas: list, active: dict):
             "Cutoff Date (optional)",
             value=None,
             key="run_env_cutoff_date",
+        )
+
+    with col4:
+        lookback_years = st.number_input(
+            "Lookback (years)",
+            min_value=1,
+            max_value=50,
+            value=10,
+            step=1,
+            key="run_env_lookback_years",
+            help="Reports run over [cutoff (or today) − lookback years, cutoff (or today)].",
         )
 
     st.write("")
@@ -194,12 +210,14 @@ def _render_new_run(schemas: list, active: dict):
                 "current_schema":     current_schema,
                 "prev_schema":        eff_prev,
                 "cutoff_date":        cutoff_date,
+                "lookback_years":     int(lookback_years),
                 "loaded_run_id":      None,
                 "session_id":         session_id,
                 "restore_session_id": None,
             }
             st.query_params["schema"]     = current_schema
             st.query_params["session_id"] = session_id
+            st.query_params["lookback"]   = str(int(lookback_years))
             if cutoff_date:
                 st.query_params["cutoff"] = str(cutoff_date)
             else:

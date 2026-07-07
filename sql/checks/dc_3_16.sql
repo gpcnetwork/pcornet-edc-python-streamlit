@@ -13,7 +13,7 @@ WITH obs AS (
                )
            ) AS MAPPED_WITH_RESULT
     FROM {{ current_schema }}.OBS_CLIN
-    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}')
+    WHERE OBSCLIN_START_DATE >= TO_DATE('{{ start_date }}') AND OBSCLIN_START_DATE <= TO_DATE('{{ end_date }}')
 )
 SELECT
     '3.16'                                                                          AS CHECK_NUM,

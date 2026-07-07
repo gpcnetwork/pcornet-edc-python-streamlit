@@ -32,7 +32,7 @@ FROM (
            CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY HT) AS INT),
            2
     FROM {{ current_schema }}.VITAL
-    WHERE HT IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE HT IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
 
     UNION ALL
     SELECT 'VITAL', 'WT (lbs)',
@@ -43,7 +43,7 @@ FROM (
            CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY WT) AS INT),
            3
     FROM {{ current_schema }}.VITAL
-    WHERE WT IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE WT IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
 
     UNION ALL
     SELECT 'VITAL', 'DIASTOLIC (mmHg)',
@@ -54,7 +54,7 @@ FROM (
            CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY DIASTOLIC) AS INT),
            4
     FROM {{ current_schema }}.VITAL
-    WHERE DIASTOLIC IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE DIASTOLIC IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
 
     UNION ALL
     SELECT 'VITAL', 'SYSTOLIC (mmHg)',
@@ -65,7 +65,7 @@ FROM (
            CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY SYSTOLIC) AS INT),
            5
     FROM {{ current_schema }}.VITAL
-    WHERE SYSTOLIC IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE SYSTOLIC IS NOT NULL AND MEASURE_DATE >= TO_DATE('{{ start_date }}') AND MEASURE_DATE <= TO_DATE('{{ end_date }}')
 
     UNION ALL
     SELECT 'DISPENSING', 'DISPENSE_SUP (days)',
@@ -76,7 +76,7 @@ FROM (
            CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY DISPENSE_SUP) AS INT),
            6
     FROM {{ current_schema }}.DISPENSING
-    WHERE DISPENSE_SUP IS NOT NULL AND DISPENSE_DATE >= TO_DATE('{{ start_date }}')
+    WHERE DISPENSE_SUP IS NOT NULL AND DISPENSE_DATE >= TO_DATE('{{ start_date }}') AND DISPENSE_DATE <= TO_DATE('{{ end_date }}')
 
 ) sub
 ORDER BY ROW_ORDER
