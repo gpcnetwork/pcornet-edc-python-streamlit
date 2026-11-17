@@ -106,7 +106,7 @@ class RunRepository:
     def load_session_results(self, session_id: str) -> list:
         return self._fetch(f"""
             SELECT r.TRIGGERED_BY, c.CHECK_ID, c.STATUS,
-                   c.ERROR_MESSAGE, c.RESULT_DATA, c.DURATION_MS
+                   c.ERROR_MESSAGE, c.RESULT_DATA, c.DURATION_MS, c.TOTAL_COUNT
             FROM {DQ_RESULTS_TABLE} c
             JOIN {DQ_RUNS_TABLE} r ON r.RUN_ID = c.RUN_ID
             WHERE COALESCE(r.SESSION_ID, r.RUN_ID) = ?

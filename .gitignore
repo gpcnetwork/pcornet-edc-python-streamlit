@@ -16,3 +16,5 @@ venv/
 Thumbs.db
 output/
 tmp/
+# SAS DCQ reference package (509MB, local reference only)
+resources/PROD_P02_DQA_FDPRO_DCQ_NSD_q703_v01/

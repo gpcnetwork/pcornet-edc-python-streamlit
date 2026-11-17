@@ -3,9 +3,12 @@ channels:
   - snowflake
 dependencies:
   - pandas
-  - plotly
   - requests
   - snowflake-snowpark-python
   - streamlit
   - keyring
   - python-dotenv
+  - jinja2
+  - altair
+  - matplotlib
+  - reportlab

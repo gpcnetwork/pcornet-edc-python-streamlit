@@ -2,25 +2,20 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 
-_IV_ENC_ORDER  = ["AV", "ED", "EI", "IP", "TH"]
-_IV_ENC_COLORS = {
-    "AV": "#1f77b4",
-    "ED": "#d62728",
-    "EI": "#ff7f0e",
-    "IP": "#ffbb78",
-    "TH": "#17becf",
-}
-
-_IVA_ENC_ORDER  = _IV_ENC_ORDER
-_IVA_ENC_COLORS = _IV_ENC_COLORS
+from views.renderer.charts.common import (
+    SECTION_IV_CHART_CONFIGS,
+    SECTION_IV_ENC_COLORS,
+    SECTION_IV_ENC_ORDER,
+    prepare_ratio_df,
+    present_series,
+)
 
 
 def _enc_type_chart(df: pd.DataFrame, metric_col: str, y_title: str,
                     metric_tooltip: str, extra_tooltips: list) -> None:
     """Shared multi-series line chart for per-encounter metric by ENC_TYPE."""
 
-    present = [e for e in _IV_ENC_ORDER if e in df["ENC_TYPE"].unique()]
-    palette = [_IV_ENC_COLORS[e] for e in present]
+    present, palette = present_series(df, SECTION_IV_ENC_ORDER, SECTION_IV_ENC_COLORS)
 
     x = alt.X(
         "MONTH_START:T",
@@ -59,41 +54,21 @@ def _enc_type_chart(df: pd.DataFrame, metric_col: str, y_title: str,
     st.altair_chart(chart, width="stretch")
 
 
-def _render_chart_iva(df: pd.DataFrame) -> None:
-    df = df.copy()
-    df["MONTH_START"]     = pd.to_datetime(df["MONTH_START"])
-    df["AVG_DX_PER_ENC"]  = pd.to_numeric(df["AVG_DX_PER_ENC"],  errors="coerce")
-    df["ENCOUNTER_COUNT"] = pd.to_numeric(df["ENCOUNTER_COUNT"], errors="coerce")
-    df["DX_COUNT"]        = pd.to_numeric(df["DX_COUNT"],        errors="coerce")
-
-    _enc_type_chart(
-        df, "AVG_DX_PER_ENC", "Diagnosis Records per Encounter", "Dx per Encounter",
-        [alt.Tooltip("ENCOUNTER_COUNT:Q", title="Encounters", format=","),
-         alt.Tooltip("DX_COUNT:Q",        title="Dx Records", format=",")],
-    )
-
-
-def _render_chart_ivb(df: pd.DataFrame) -> None:
-    df = df.copy()
-    df["MONTH_START"]     = pd.to_datetime(df["MONTH_START"])
-    df["AVG_PX_PER_ENC"]  = pd.to_numeric(df["AVG_PX_PER_ENC"],  errors="coerce")
-    df["ENCOUNTER_COUNT"] = pd.to_numeric(df["ENCOUNTER_COUNT"], errors="coerce")
-    df["PX_COUNT"]        = pd.to_numeric(df["PX_COUNT"],        errors="coerce")
-
-    _enc_type_chart(
-        df, "AVG_PX_PER_ENC", "Procedure Records per Encounter", "Px per Encounter",
-        [alt.Tooltip("ENCOUNTER_COUNT:Q", title="Encounters", format=","),
-         alt.Tooltip("PX_COUNT:Q",        title="Px Records", format=",")],
-    )
+def _render_config_chart(df: pd.DataFrame, chart_key: str) -> None:
+    """Render one Section IV ratio chart from its SECTION_IV_CHART_CONFIGS entry."""
+    cfg = SECTION_IV_CHART_CONFIGS[chart_key]
+    df = prepare_ratio_df(df, chart_key)
+    extra = [alt.Tooltip(f"{col}:Q", title=title, format=",")
+             for col, title in cfg["count_cols"]]
+    _enc_type_chart(df, cfg["metric_col"], cfg["y_title"], cfg["metric_tooltip"], extra)
 
 
 def render(df: pd.DataFrame, date_cols: list, numeric_cols: list, item_name: str = "") -> None:
     """Entry point for all Section IV charts."""
     name = item_name.upper()
-    if name == "CHART IVA" and "AVG_DX_PER_ENC" in df.columns:
-        _render_chart_iva(df)
-    elif name == "CHART IVB" and "AVG_PX_PER_ENC" in df.columns:
-        _render_chart_ivb(df)
+    cfg  = SECTION_IV_CHART_CONFIGS.get(name)
+    if cfg and cfg["metric_col"] in df.columns:
+        _render_config_chart(df, name)
     elif date_cols and numeric_cols:
         st.line_chart(df.set_index(date_cols[0])[numeric_cols])
     elif len(df.columns) >= 2 and numeric_cols:

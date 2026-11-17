@@ -3,10 +3,13 @@ import json
 import streamlit as st
 
 from services.dq_checks_service import load_dq_checks, run_single_check
+from services.report_metadata import get_report_metadata, metadata_display_rows
 from services.section_service import load_sections, run_section_item
 from utils.constants import fmt_ms
 from utils.db import get_meta_conn
 from utils.run_repository import RunRepository
+from utils.schema_inspector import SchemaInspector
+from views.dc_summary_view import render_dc_summary_view
 from views.dq_checks_view import render_dq_checks_view, _dq_status
 from views.section_view import render_section_view
 
@@ -62,9 +65,12 @@ def _restore_session(session, session_id: str, sections_df):
             st.session_state.setdefault(f"{slug}_results",   {})
             st.session_state.setdefault(f"{slug}_statuses",  {})
             st.session_state.setdefault(f"{slug}_durations", {})
+            st.session_state.setdefault(f"{slug}_rowcounts", {})
             st.session_state[f"{slug}_results"][check_id]   = deserialized
             st.session_state[f"{slug}_statuses"][check_id]  = status
             st.session_state[f"{slug}_durations"][check_id] = duration_ms
+            st.session_state[f"{slug}_rowcounts"][check_id] = int(
+                getattr(check_row, "TOTAL_COUNT", 0) or 0)
 
 
 def _count_missing_results(sections_df) -> dict:
@@ -209,6 +215,37 @@ def _execute_missing(session, run_env, sections_df):
         RunRepository(get_meta_conn()).complete_run(sec_run_id, "COMPLETE")
 
 
+def _build_pdf(session, run_env, sections_df) -> bytes:
+    """Assemble the EDCRPT-replica PDF from stored session results (no CDM queries)."""
+    from services.dc_summary_service import build_dc_summary
+    from services.report_pdf import build_report_pdf
+    from services.report_text import load_report_text
+
+    active = st.session_state.get("active_site", {})
+    schema = run_env["current_schema"]
+    meta = get_report_metadata(session, get_meta_conn(), schema, run_env)
+
+    section_results, rowcounts = {}, {}
+    for section_name in sections_df["Section"].unique():
+        slug = section_name.split(":")[0].strip().lower().replace(" ", "_")
+        section_results[slug] = st.session_state.get(f"{slug}_results", {}) or {}
+        rowcounts.update(st.session_state.get(f"{slug}_rowcounts", {}) or {})
+
+    dq_statuses = st.session_state.get("dq_statuses", {}) or {}
+    summary_df = build_dc_summary(load_dq_checks(), dq_statuses)
+
+    return build_report_pdf(
+        metadata=meta,
+        summary_df=summary_df,
+        sections_df=sections_df,
+        section_results=section_results,
+        report_texts=load_report_text(),
+        rowcounts=rowcounts,
+        dq_statuses=dq_statuses,
+        site_label=f"{active.get('site_name', '')} · {active.get('database_name', '')}.{schema}",
+    )
+
+
 def render_analysis_view(session):
     active  = st.session_state.get("active_site", {})
     run_env = st.session_state["run_env"]
@@ -218,6 +255,14 @@ def render_analysis_view(session):
     cutoff_date    = run_env.get("cutoff_date")
     lookback_years = run_env.get("lookback_years", 10)
     session_id     = run_env.get("session_id")
+
+    # No explicit cutoff → anchor the report to the HARVEST refresh_max,
+    # like the SAS EDC report does (falls back to today() in SqlLoader).
+    if not cutoff_date:
+        refresh_max = SchemaInspector.get_refresh_max(session, schema)
+        if refresh_max:
+            cutoff_date = refresh_max
+            run_env["cutoff_date"] = refresh_max
 
     sections_df = load_sections()
 
@@ -260,11 +305,37 @@ def render_analysis_view(session):
     if prev_schema:
         info_parts.append(f"Prev: `{prev_schema}`")
     if cutoff_date:
-        info_parts.append(f"Cutoff: `{cutoff_date}`")
+        info_parts.append(f"Reference date: `{cutoff_date}`")
     info_parts.append(f"Lookback: `{lookback_years}y`")
     if total_ms:
         info_parts.append(f"Total time: `{fmt_ms(total_ms)}`")
     st.info("  ·  ".join(info_parts))
+
+    meta_col, pdf_col = st.columns([6, 2])
+    with meta_col:
+        with st.expander("Report Metadata"):
+            meta = get_report_metadata(session, get_meta_conn(), schema, run_env)
+            meta_cols = st.columns(4)
+            for i, (label, value) in enumerate(metadata_display_rows(meta)):
+                with meta_cols[i % 4]:
+                    st.caption(label)
+                    st.markdown(f"**{value}**")
+    with pdf_col:
+        if st.button("📄 Generate PDF Report", width="stretch"):
+            with st.spinner("Building EDC report PDF…"):
+                try:
+                    st.session_state["report_pdf_bytes"] = _build_pdf(session, run_env, sections_df)
+                except ImportError as exc:
+                    st.error(f"PDF libraries unavailable: {exc}")
+        if st.session_state.get("report_pdf_bytes"):
+            ref = str(run_env.get("cutoff_date") or "")[:10]
+            st.download_button(
+                "⬇ Download EDC Report (PDF)",
+                data=st.session_state["report_pdf_bytes"],
+                file_name=f"EDCRPT_{active.get('site_id', 'site')}_{ref}.pdf",
+                mime="application/pdf",
+                width="stretch",
+            )
 
     missing = _count_missing_results(sections_df)
     total_missing = missing["dq"] + missing["table"] + missing["chart"]
@@ -285,7 +356,7 @@ def render_analysis_view(session):
                 st.rerun()
 
     section_names = sections_df["Section"].unique().tolist()
-    tab_labels    = ["DQ CHECKS"] + [s.split(":", 1)[1].strip() for s in section_names]
+    tab_labels    = ["DC SUMMARY", "DQ CHECKS"] + [s.split(":", 1)[1].strip() for s in section_names]
 
     # Restore active tab from URL on browser refresh (st.query_params survives refresh)
     if "active_tab" not in st.session_state:
@@ -294,7 +365,7 @@ def render_analysis_view(session):
         except (ValueError, TypeError):
             st.session_state["active_tab"] = 0
 
-    active_tab = max(0, min(st.session_state["active_tab"], len(section_names)))
+    active_tab = max(0, min(st.session_state["active_tab"], len(section_names) + 1))
     st.session_state["active_tab"] = active_tab
 
     # Custom tab navigation bar
@@ -315,10 +386,12 @@ def render_analysis_view(session):
 
     # Render only the active view
     if active_tab == 0:
+        render_dc_summary_view()
+    elif active_tab == 1:
         render_dq_checks_view(session, schema, cutoff_date, prev_schema=prev_schema,
                               session_id=session_id, lookback_years=lookback_years)
     else:
-        section_name = section_names[active_tab - 1]
+        section_name = section_names[active_tab - 2]
         items = sections_df[sections_df["Section"] == section_name].reset_index(drop=True)
         render_section_view(session, section_name, items, schema, cutoff_date,
                             prev_schema, session_id=session_id,

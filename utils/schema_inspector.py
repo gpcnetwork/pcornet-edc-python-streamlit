@@ -33,6 +33,49 @@ class SchemaInspector:
             return set()
 
     @staticmethod
+    def get_refresh_max(session, schema: str):
+        """Max refresh date across the HARVEST REFRESH_*_DATE columns.
+
+        Mirrors the SAS EDC report's REFRESH_MAX (xtbl_l3_metadata), which is the
+        reference date every windowed check is anchored to. Returns a datetime.date
+        or None when HARVEST is absent/empty.
+        """
+        import datetime
+
+        try:
+            cols = [
+                r["COL"] for r in session.sql(f"""
+                    SELECT UPPER(COLUMN_NAME) AS COL
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE UPPER(TABLE_SCHEMA) = UPPER('{schema}')
+                      AND UPPER(TABLE_NAME)   = 'HARVEST'
+                      AND UPPER(COLUMN_NAME) LIKE 'REFRESH%DATE'
+                """).collect()
+            ]
+            if not cols:
+                return None
+            select_list = ", ".join(f"MAX(TRY_TO_DATE(CAST({c} AS VARCHAR))) AS {c}" for c in cols)
+            row = session.sql(f"SELECT {select_list} FROM {schema}.HARVEST").collect()
+            if not row:
+                return None
+            dates = []
+            for v in row[0]:
+                if v is None:
+                    continue
+                if isinstance(v, datetime.datetime):
+                    v = v.date()
+                if isinstance(v, datetime.date):
+                    dates.append(v)
+                else:
+                    try:
+                        dates.append(datetime.date.fromisoformat(str(v)[:10]))
+                    except ValueError:
+                        pass
+            return max(dates) if dates else None
+        except Exception:
+            return None
+
+    @staticmethod
     def get_current_database(session) -> str:
         return session.sql("SELECT CURRENT_DATABASE()").collect()[0][0]
 

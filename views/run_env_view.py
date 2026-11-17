@@ -167,6 +167,8 @@ def _render_new_run(schemas: list, active: dict):
             "Cutoff Date (optional)",
             value=None,
             key="run_env_cutoff_date",
+            help="Reference date for the report. Leave empty to use the DataMart's "
+                 "HARVEST max refresh date, matching the SAS EDC report.",
         )
 
     with col4:
@@ -177,7 +179,8 @@ def _render_new_run(schemas: list, active: dict):
             value=10,
             step=1,
             key="run_env_lookback_years",
-            help="Reports run over [cutoff (or today) − lookback years, cutoff (or today)].",
+            help="Window for trend charts/tables: [reference date − lookback years, reference date]. "
+                 "Conformance checks always evaluate full tables, as in SAS.",
         )
 
     st.write("")

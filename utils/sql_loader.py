@@ -46,8 +46,12 @@ class SqlLoader:
     ) -> dict:
         """Build Jinja2 template params for SQL preview rendering.
 
-        All reports run over one unified window: [ref - lookback_years, ref],
-        where ref = cutoff_date if given, else today().
+        ref (= end_date) is the report reference date: the caller passes the user
+        cutoff or, when none was given, the HARVEST refresh_max (resolved in
+        analysis_view) — mirroring the SAS EDC report's REFRESH_MAX anchor.
+        today() is only a last-resort fallback. start_date/filter_date/year_1
+        describe the [ref - lookback_years, ref] window used by trend charts;
+        conformance checks must not use them.
         """
         cutoff_str = str(cutoff_date)[:10] if cutoff_date else None
         ref_dt = _dt.date.fromisoformat(cutoff_str) if cutoff_str else _dt.date.today()

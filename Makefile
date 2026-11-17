@@ -12,7 +12,7 @@ APP_NAME             ?= PCORNET_DQ_DASHBOARD
 
 local: ## [DEPLOY] Run the app locally (opens browser for SSO, then Streamlit)
 	@echo "── Starting local Streamlit server (DQ_APP_MODE=local) ──"
-	DQ_APP_MODE=local streamlit run streamlit_app.py
+	DQ_APP_MODE=local uv run streamlit run streamlit_app.py
 
 deploy:  
 	@echo "── Deploying $(APP_NAME) on compute pool $(COMPUTE_POOL) ──"

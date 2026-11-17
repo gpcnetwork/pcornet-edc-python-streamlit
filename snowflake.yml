@@ -10,7 +10,7 @@ entities:
     main_file: streamlit_app.py
     artifacts:
       - streamlit_app.py
-      - resources/
+      - resources/dq-analysis/
       - services/
       - sql/
       - views/

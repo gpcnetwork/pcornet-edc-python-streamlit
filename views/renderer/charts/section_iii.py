@@ -2,24 +2,18 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 
-_III_ENC_ORDER  = ["AV", "ED", "EI", "IP", "TH"]
-_III_ENC_COLORS = {
-    "AV": "#1f77b4",
-    "ED": "#d62728",
-    "EI": "#ff7f0e",
-    "IP": "#ffbb78",
-    "TH": "#17becf",
-}
+from views.renderer.charts.common import (
+    SECTION_III_ENC_COLORS,
+    SECTION_III_ENC_ORDER,
+    prepare_monthly_volume_df,
+    present_series,
+)
 
 
 def _render_enc_type_monthly(df: pd.DataFrame) -> None:
-    df = df.copy()
-    df["MONTH_START"]   = pd.to_datetime(df["MONTH_START"])
-    df["RECORD_COUNT"]  = pd.to_numeric(df["RECORD_COUNT"],  errors="coerce")
-    df["PATIENT_COUNT"] = pd.to_numeric(df["PATIENT_COUNT"], errors="coerce")
+    df = prepare_monthly_volume_df(df)
 
-    present = [e for e in _III_ENC_ORDER if e in df["ENC_TYPE"].unique()]
-    palette = [_III_ENC_COLORS[e] for e in present]
+    present, palette = present_series(df, SECTION_III_ENC_ORDER, SECTION_III_ENC_COLORS)
 
     x = alt.X(
         "MONTH_START:T",
@@ -60,10 +54,7 @@ def _render_enc_type_monthly(df: pd.DataFrame) -> None:
 
 
 def _render_single_monthly(df: pd.DataFrame) -> None:
-    df = df.copy()
-    df["MONTH_START"]   = pd.to_datetime(df["MONTH_START"])
-    df["RECORD_COUNT"]  = pd.to_numeric(df["RECORD_COUNT"],  errors="coerce")
-    df["PATIENT_COUNT"] = pd.to_numeric(df["PATIENT_COUNT"], errors="coerce")
+    df = prepare_monthly_volume_df(df)
 
     x = alt.X(
         "MONTH_START:T",

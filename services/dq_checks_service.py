@@ -11,9 +11,6 @@ from utils.sql_loader import (
     SqlLoader,
     DEFAULT_LOOKBACK_YEARS,
 )
-from utils.table_renderer import TableRenderer
-
-
 @st.cache_data
 def load_dq_checks() -> pd.DataFrame:
     base = Path(__file__).parent.parent
@@ -58,9 +55,3 @@ def load_previous_run_results(session, run_id: str) -> dict:
         }
     except Exception:
         return {}
-
-
-def render_check_result(records: list) -> str:
-    if not records:
-        return "<p><em>No results returned.</em></p>"
-    return TableRenderer.generate_generic_table(records, [], [], [], None)

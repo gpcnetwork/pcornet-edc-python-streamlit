@@ -1,6 +1,6 @@
 Section|Table|Table Description|Data Check(s)|SQL_File_Ref
 Section I: Descriptive Information|Table IA|Demographic Summary|n/a|sql/section_i/table_ia_demographic_summary.sql
-Section I: Descriptive Information|Table IB|Potential Pools of Patients|2.09, 3.04, 3.05|sql/section_i/table_ib_potential_pools.sql
+Section I: Descriptive Information|Table IB|Potential Pools of Patients|2.09, 3.04, 3.05, 3.18|sql/section_i/table_ib_potential_pools.sql
 Section I: Descriptive Information|Table IC|Height, Weight, and Body Mass Index (BMI)|n/a|sql/section_i/table_ic_height_weight_bmi.sql
 Section I: Descriptive Information|Table ID|Records, Refresh Dates, Patients, Encounters, and Date Ranges by Table|1.18|sql/section_i/table_id_records_refresh_dates.sql
 Section I: Descriptive Information|Table IE|Records Per Table by Encounter Type|n/a|sql/section_i/table_ie_records_by_encounter_type.sql
@@ -42,13 +42,13 @@ Section IV: Data Completeness and Plausibility|Table IVB|Procedure Records Per E
 Section IV: Data Completeness and Plausibility|Chart IVB|Procedure Records Per Encounter by Admit Date and Encounter Type, Past 5 Years|n/a|sql/section_iv/chart_ivb_procedure_trend.sql
 Section IV: Data Completeness and Plausibility|Table IVC|Missing or Unknown Values, Required Tables|3.03|sql/section_iv/table_ivc_missing_unknown_required.sql
 Section IV: Data Completeness and Plausibility|Table IVD|Missing or Unknown Values, Optional Tables|3.03|sql/section_iv/table_ivd_missing_unknown_optional.sql
-Section IV: Data Completeness and Plausibility|Table IVE|Principal Diagnoses for Institutional Encounters|2.07, 3.06|sql/section_iv/table_ive_principal_diagnoses.sql
+Section IV: Data Completeness and Plausibility|Table IVE|Principal Diagnoses for Institutional Encounters|n/a|sql/section_iv/table_ive_principal_diagnoses.sql
 Section IV: Data Completeness and Plausibility|Table IVF|Data Latency and Completeness of Encounter, Diagnosis and Procedure Data, Past 2 Years|3.07|sql/section_iv/table_ivf_data_latency_enc_dx_proc.sql
 Section IV: Data Completeness and Plausibility|Table IVG|Data Latency and Completeness of Vital, Prescription, and Lab Data, Past 2 Years|3.11|sql/section_iv/table_ivg_data_latency_vital_rx_lab.sql
 Section IV: Data Completeness and Plausibility|Table IVH|RXNORM Term Type Mapping|3.08, 3.15|sql/section_iv/table_ivh_rxnorm_mapping.sql
-Section IV: Data Completeness and Plausibility|Table IVI|Laboratory and Clinical Observation Result Data Completeness|3.09, 3.10, 3.12, 3.16, 3.17|sql/section_iv/table_ivi_lab_obs_completeness.sql
+Section IV: Data Completeness and Plausibility|Table IVI|Laboratory and Clinical Observation Result Data Completeness|3.09, 3.12, 3.16, 3.17|sql/section_iv/table_ivi_lab_obs_completeness.sql
 Section IV: Data Completeness and Plausibility|Table IVI_Ref|Laboratory and Clinical Observation Result Data Completeness Definitions|n/a|n/a
-Section IV: Data Completeness and Plausibility|Table IVJ|Data Latency and Completeness of Medication Administration, Dispensing and Clinical Observation Data, Past 2 Years|3.14|sql/section_iv/table_ivj_data_latency_medadmin_disp_obs.sql
+Section IV: Data Completeness and Plausibility|Table IVJ|Data Latency and Completeness of Medication Administration, Dispensing and Clinical Observation Data, Past 2 Years|n/a|sql/section_iv/table_ivj_data_latency_medadmin_disp_obs.sql
 Section V: Data Persistence|Table VA|Changes in Tables|4.01|sql/section_v/table_va_changes_in_tables.sql
 Section V: Data Persistence|Table VB|Changes in Selected Encounter Types and Domains|4.02|sql/section_v/table_vb_changes_encounter_types.sql
 Section V: Data Persistence|Table VC|Changes in Selected Code Types|4.03|sql/section_v/table_vc_changes_code_types.sql

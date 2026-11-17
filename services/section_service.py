@@ -6,7 +6,6 @@ import streamlit as st
 from utils.db import get_meta_conn
 from utils.run_repository import RunRepository
 from utils.sql_loader import load_sql, SqlLoader, DEFAULT_LOOKBACK_YEARS
-from utils.table_renderer import TableRenderer
 
 
 @st.cache_data
@@ -33,9 +32,3 @@ def run_section_item(
         return True, records
     except Exception as exc:
         return False, [{"STATUS": "ERROR", "DETAIL": str(exc)}]
-
-
-def render_table_item(records: list) -> str:
-    if not records:
-        return "<p><em>No results returned.</em></p>"
-    return TableRenderer.generate_generic_table(records, [], [], [], None)

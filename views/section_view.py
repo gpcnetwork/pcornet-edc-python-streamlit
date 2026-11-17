@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from services.section_service import run_section_item
+from services.static_tables import load_static_table
 from utils.constants import fmt_ms
 from utils.db import get_meta_conn
 from utils.run_repository import RunRepository
@@ -11,7 +12,6 @@ from utils.sql_loader import SqlLoader
 from views.renderer.charts.base import (
     EXCEPTION_MARKERS as _EXCEPTION_MARKERS,
     count_exceptions  as _count_exceptions,
-    pct_exception_styles as _pct_exception_styles,
     render_table_generic as _render_table_generic,
 )
 
@@ -374,6 +374,11 @@ def render_section_view(session, section_name: str, items_df: pd.DataFrame,
                     st.code(SqlLoader.load_raw(sql_file), language="sql")
                 except Exception:
                     st.warning("SQL file not found.")
+
+        if not has_sql:
+            static_df = load_static_table(item_key)
+            if static_df is not None:
+                st.dataframe(static_df, width="stretch", hide_index=True)
 
         results = st.session_state[f"{slug}_results"]
         if item_key in results:

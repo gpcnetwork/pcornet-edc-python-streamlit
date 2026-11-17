@@ -1,0 +1,7 @@
+Description|Source Table Row|CODE criteria|RESULT_NUM criteria|RESULT_MODIFIER criteria|Other criteria
+Number of distinct codes||Not null|||
+Results mapped to a known code|KNOWN_TEST|Not null|||
+Results mapped to a known code with a known result|KNOWN_TEST_RESULT|Not null|||[RESULT_NUM is not null and RESULT_MODIFIER is not in (NI, UN, OT, null)] or RESULT_QUAL is not in (NI, UN, OT, null) or RESULT_TEXT is not null
+Quantitative results|KNOWN_TEST_RESULT_NUM|Not null|Not null|not in (NI, UN, OT, null)|
+Quantitative results which specify the result unit|KNOWN_TEST_RESULT_NUM_UNIT|Not null|Not null|not in (NI, UN, OT, null)|RESULT_UNIT is not in ('NI','UN','OT', null)
+Quantitative results which fully specify the normal range.|KNOWN_TEST_NUM_RESULT_RANGE|Not null|Not null|not in (NI, UN, OT, null)|[NORM_MODIFIER_LOW='EQ' and NORM_MODIFIER_HIGH='EQ' and NORM_RANGE_LOW is not null and NORM_RANGE_HIGH is not null] or [NORM_MODIFIER_LOW in ('GT','GE') and NORM_MODIFER_HIGH='NO' and NORM_RANGE_LOW is not null and NORM_RANGE_HIGH is null] or [NORM_MODIFIER_HIGH in ('LE','LT') and NORM_MODIFIER_LOW='NO' and NORM_RANGE_HIGH is not null and NORM_RANGE_LOW is null].

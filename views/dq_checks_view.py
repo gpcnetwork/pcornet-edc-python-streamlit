@@ -10,13 +10,14 @@ from utils.db import get_meta_conn
 from utils.run_repository import RunRepository
 from utils.sql_loader import SqlLoader
 
-_STATUS_BADGE = {"complete": "✅", "fail": "❌", "error": "❌", "pending": "⬜"}
+_STATUS_BADGE = {"complete": "✅", "fail": "❌", "error": "❌", "pending": "⬜", "na": "➖"}
 _PAGE_SIZE = 10
 
 # Maps the user-visible Pass/Fail labels to internal status values
 # "fail"  = check ran OK, result STATUS = Fail
+# "na"    = check ran OK, result STATUS = n/a (domain has no data, per SAS)
 # "error" = SQL execution error
-_RESULT_LABELS = {"Pass": "complete", "Fail": "fail", "Not Run": "pending"}
+_RESULT_LABELS = {"Pass": "complete", "Fail": "fail", "n/a": "na", "Not Run": "pending"}
 
 
 def _dq_status(success: bool, result) -> str:
@@ -28,7 +29,12 @@ def _dq_status(success: bool, result) -> str:
         if row is None:
             return "complete"
         val = row.get("STATUS") if isinstance(row, dict) else getattr(row, "STATUS", None)
-        return "fail" if str(val).strip() == "Fail" else "complete"
+        val = str(val).strip()
+        if val == "Fail":
+            return "fail"
+        if val.lower() == "n/a":
+            return "na"
+        return "complete"
     except Exception:
         return "complete"
 
@@ -43,7 +49,7 @@ def _build_check_to_sections() -> dict:
         checks_str = str(row.get("Data Check(s)", "")).strip()
         if checks_str.lower() in ("n/a", "nan", ""):
             continue
-        tab_idx = section_names.index(row["Section"]) + 1  # tab 0 = DQ CHECKS
+        tab_idx = section_names.index(row["Section"]) + 2  # tab 0 = DC SUMMARY, 1 = DQ CHECKS
         for check_num in [c.strip() for c in checks_str.split(",")]:
             if check_num:
                 mapping.setdefault(check_num, []).append(
@@ -172,14 +178,14 @@ def render_dq_checks_view(session, schema: str, cutoff_date,
     # ── Summary + Run buttons ──────────────────────────────────────────────────
     total_done = sum(
         1 for _, r in dq_df.iterrows()
-        if st.session_state["dq_statuses"].get(_row_key(r)) in ("complete", "fail")
+        if st.session_state["dq_statuses"].get(_row_key(r)) in ("complete", "fail", "na")
     )
 
     # Pending = never run, SQL error, or DQ Fail result (all re-runnable)
     pending_runnable = all_runnable[
         all_runnable.apply(
             lambda r: st.session_state["dq_statuses"].get(_row_key(r), "pending")
-                      != "complete",
+                      not in ("complete", "na"),
             axis=1,
         )
     ]
